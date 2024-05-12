@@ -1,3 +1,5 @@
+use super::decoder::Decoder;
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Register {
     D0,
@@ -111,5 +113,17 @@ impl Register {
             0x1F => Self::A15,
             _ => unreachable!(),
         }
+    }
+}
+
+impl Decoder for Register {
+    type DecodedItem = Register;
+
+    fn decode(pattern: u32) -> Self::DecodedItem {
+        //Take the first five bits of the pattern, these describe the used registers!
+        //This should work for our dest and source register!
+        let register_pattern = pattern & 0x1F;
+
+        Register::new(register_pattern)
     }
 }
