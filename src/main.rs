@@ -1,8 +1,6 @@
 mod cpu;
 
-use cpu::addressing_modes::AddressingMode;
 use cpu::core;
-use cpu::opcode_size::OpcodeSize;
 
 const MEMORY_SIZE: usize = 128 * (1024 * 1024);
 
