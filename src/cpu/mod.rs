@@ -1,5 +1,6 @@
-pub mod addressing_modes;
+mod addressing_modes;
 pub mod core;
-pub mod opcode;
-pub mod opcode_size;
-pub mod register;
+mod decoder;
+mod opcode;
+mod opcode_size;
+mod register;
