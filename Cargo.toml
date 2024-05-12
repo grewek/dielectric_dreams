@@ -1,0 +1,6 @@
+[package]
+name = "dielectric_dreams"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
