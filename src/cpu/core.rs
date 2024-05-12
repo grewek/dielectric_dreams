@@ -1,4 +1,5 @@
 use super::addressing_modes::AddressingMode;
+use super::decoder::Decoder;
 use super::opcode::MoveOpcode;
 use super::opcode::Opcode;
 use super::opcode_size::OpcodeSize;
@@ -47,11 +48,11 @@ impl Cpu {
         let decrement = increment_mode & 0x02 == 0x02;
 
         match addr_mode_bits {
-            0x00..=0x01 => AddressingMode::Atomic(Register::new(register)),
-            0x03 if increment => AddressingMode::MemoryInc(Register::new(register)),
-            0x03 if decrement => AddressingMode::MemoryDec(Register::new(register)),
+            0x00..=0x01 => AddressingMode::Atomic(Register::decode(register)),
+            0x03 if increment => AddressingMode::MemoryInc(Register::decode(register)),
+            0x03 if decrement => AddressingMode::MemoryDec(Register::decode(register)),
             //TODO(Kay): We should rethink the ISA things are getting fiddly already...
-            0x03 => AddressingMode::Memory(Register::new(register & 0x1F)),
+            0x03 => AddressingMode::Memory(Register::decode(register)),
             _ => unreachable!(),
         }
     }
