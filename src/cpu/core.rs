@@ -244,6 +244,7 @@ mod test {
 
     #[test]
     fn test_move_memory_to_dword_registers() {
+        //TODO(Kay): Add the rest of the registers as well!
         for address_register in &ADDRESS_REGISTERS {
             let opcode =
                 generate_memory_move_opcode(Register::D0, *address_register, 0, OpcodeSize::Dword);
