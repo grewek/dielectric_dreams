@@ -1,9 +1,22 @@
+use crate::AddressingMode;
 use crate::Memory;
 use crate::MoveOpcode;
 use crate::Opcode;
 use crate::OpcodeSize;
 use crate::Register;
 use crate::RegisterFile;
+
+const DECODER_OPCODE_MASK: u32 = 0x3FF;
+const DECODER_DESTINATION_REGISTER_START: u32 = 10;
+const DECODER_DESTINATION_REGISTER_MASK: u32 = 0x3F;
+const DECODER_SOURCE_REGISTER_START: u32 = 16;
+const DECODER_SOURCE_REGISTER_MASK: u32 = 0x3F;
+const DECODER_OFFSET_START: u32 = 22;
+const DECODER_OFFSET_MASK: u32 = 0x3F;
+const DECODER_SIZE_START: u32 = 28;
+const DECODER_SIZE_MASK: u32 = 0x03;
+const DECODER_INCREMENT_START: u32 = 30;
+const DECODER_INCREMENT_MASK: u32 = 0x03;
 
 pub struct Cpu {
     registers: RegisterFile,
@@ -13,7 +26,6 @@ pub struct Cpu {
 }
 
 //TODO(Kay): If i really want to put this on a FPGA later i should make sure this fever dream is working on real electronic circuits...but i don't have a degree in electronics... :D
-//TODO(Kay): The Documentation should be moved into a seperate file...
 //TODO(Kay): We leave the flags out for now as it is still to be determined how that should work :)
 //TODO(Kay): We will take a bit of inspiration from the good old MOTOROLA 68K :)
 //TODO(Kay): It might be that i misjudged the amount of opcodes i need!
@@ -28,20 +40,37 @@ impl Cpu {
         }
     }
 
+    pub fn addressing_mode(&self, increment_mode: u32, register: u32) -> AddressingMode {
+        let addr_mode_bits = register >> 4;
+
+        let increment = increment_mode & 0x01 == 0x01;
+        let decrement = increment_mode & 0x02 == 0x02;
+
+        match addr_mode_bits {
+            0x00..=0x01 => AddressingMode::Atomic(Register::new(register)),
+            0x03 if increment => AddressingMode::MemoryInc(Register::new(register)),
+            0x03 if decrement => AddressingMode::MemoryDec(Register::new(register)),
+            0x03 => AddressingMode::Memory(Register::new(register)),
+            _ => unreachable!(),
+        }
+    }
+
     pub fn decoder(&self, to_decode: u32) -> Opcode {
-        let opcode = to_decode & 0x3FF;
-        let dest = (to_decode >> 10) & 0x3F;
-        let src = (to_decode >> 16) & 0x3F;
+        let opcode = to_decode & DECODER_OPCODE_MASK;
+        let dest =
+            (to_decode >> DECODER_DESTINATION_REGISTER_START) & DECODER_DESTINATION_REGISTER_MASK;
+        let src = (to_decode >> DECODER_SOURCE_REGISTER_START) & DECODER_SOURCE_REGISTER_MASK;
 
-        let src_immediate_value = src & 0x20;
+        //let src_immediate_value = src & 0x20;
 
-        let offset = (to_decode >> 22) & 0x3F;
-        let size = (to_decode >> 28) & 0xF;
+        let offset = (to_decode >> DECODER_OFFSET_START) & DECODER_OFFSET_MASK;
+        let size = (to_decode >> DECODER_SIZE_START) & DECODER_SIZE_MASK;
+        let increment = (to_decode >> DECODER_INCREMENT_START) & DECODER_INCREMENT_MASK;
 
         match opcode {
             0x01 => Opcode::Move(MoveOpcode {
-                destination: Register::new(dest),
-                source: Register::new(src),
+                destination: self.addressing_mode(increment, dest), //AddressingMode::Atomic(Register::new(dest)),
+                source: self.addressing_mode(increment, src), //AddressingMode::Atomic(Register::new(src)),
                 offset,
                 size: OpcodeSize::new(size),
             }),
@@ -94,8 +123,8 @@ mod test {
 
     fn simple_move_expect(dest: Register, src: Register, size: OpcodeSize) -> Opcode {
         Opcode::Move(MoveOpcode {
-            destination: dest,
-            source: src,
+            destination: AddressingMode::Atomic(dest),
+            source: AddressingMode::Atomic(src),
             offset: 0,
             size,
         })
