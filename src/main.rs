@@ -4,6 +4,14 @@ mod cpu;
 
 const MEMORY_SIZE: usize = 128 * (1024 * 1024);
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum AddressingMode {
+    Atomic(Register),
+    Memory(Register),
+    MemoryInc(Register),
+    MemoryDec(Register),
+}
+
 #[derive(Debug, PartialEq, Eq)]
 enum Opcode {
     Move(MoveOpcode),
@@ -155,8 +163,8 @@ impl OpcodeSize {
 
 #[derive(Debug, PartialEq, Eq)]
 struct MoveOpcode {
-    destination: Register,
-    source: Register,
+    destination: AddressingMode,
+    source: AddressingMode,
     offset: u32,
     size: OpcodeSize,
 }
