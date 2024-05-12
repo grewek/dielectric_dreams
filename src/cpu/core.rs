@@ -1,9 +1,9 @@
-use crate::AddressingMode;
+use super::addressing_modes::AddressingMode;
+use super::opcode::MoveOpcode;
+use super::opcode::Opcode;
+use super::opcode_size::OpcodeSize;
+use super::register::Register;
 use crate::Memory;
-use crate::MoveOpcode;
-use crate::Opcode;
-use crate::OpcodeSize;
-use crate::Register;
 use crate::RegisterFile;
 
 const DECODER_OPCODE_MASK: u32 = 0x3FF;
