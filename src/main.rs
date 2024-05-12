@@ -1,6 +1,6 @@
-use crate::cpu::Cpu;
-
 mod cpu;
+
+use cpu::core;
 
 const MEMORY_SIZE: usize = 128 * (1024 * 1024);
 
@@ -206,7 +206,7 @@ impl RegisterFile {
 }
 
 fn main() {
-    let cpu = Cpu::new();
+    let cpu = core::Cpu::new();
     cpu.decoder(u32::MAX);
     println!("Hello, world!");
 }
