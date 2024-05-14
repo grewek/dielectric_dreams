@@ -1,5 +1,5 @@
 use super::addressing_modes::AddressingMode;
-use super::decoder::Decoder;
+use super::decoder::BitPattern;
 use super::opcode::MoveOpcode;
 use super::opcode::Opcode;
 use super::opcode_size::OpcodeSize;
@@ -41,7 +41,7 @@ impl Cpu {
         }
     }
 
-    pub fn addressing_mode(&self, increment_mode: u32, register: u32) -> AddressingMode {
+    /*pub fn addressing_mode(&self, increment_mode: u32, register: u32) -> AddressingMode {
         let addr_mode_bits = register >> 4;
 
         let increment = increment_mode & 0x01 == 0x01;
@@ -55,10 +55,12 @@ impl Cpu {
             0x03 => AddressingMode::Memory(Register::decode(register)),
             _ => unreachable!(),
         }
-    }
+    }*/
 
     pub fn decoder(&self, to_decode: u32) -> Opcode {
-        let opcode = to_decode & DECODER_OPCODE_MASK;
+        let raw_opcode = BitPattern::new(to_decode);
+        raw_opcode.into()
+        /*let opcode = to_decode & DECODER_OPCODE_MASK;
         let dest =
             (to_decode >> DECODER_DESTINATION_REGISTER_START) & DECODER_DESTINATION_REGISTER_MASK;
         let src = (to_decode >> DECODER_SOURCE_REGISTER_START) & DECODER_SOURCE_REGISTER_MASK;
@@ -77,7 +79,7 @@ impl Cpu {
                 size: OpcodeSize::new(size),
             }),
             _ => todo!(),
-        }
+        }*/
     }
 }
 
