@@ -155,8 +155,9 @@ mod test {
 
     fn simple_move_expect(dest: Register, src: Register, size: OpcodeSize) -> Opcode {
         Opcode::Move(MoveOpcode {
-            destination: AddressingMode::Atomic(dest),
-            source: AddressingMode::Atomic(src),
+            addr_mode: AddressingMode::Atomic,
+            destination: dest,
+            source: src,
             offset: 0,
             size,
         })
@@ -164,8 +165,9 @@ mod test {
 
     fn simple_memory_move_expect(dest: Register, src: Register, size: OpcodeSize) -> Opcode {
         Opcode::Move(MoveOpcode {
-            destination: AddressingMode::Atomic(dest),
-            source: AddressingMode::Memory(src),
+            addr_mode: AddressingMode::Memory,
+            destination: dest,
+            source: src,
             offset: 0,
             size,
         })
