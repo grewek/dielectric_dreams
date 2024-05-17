@@ -94,34 +94,11 @@ pub fn addressing_mode(increment_mode: u32, register: u32) -> AddressingMode {
     let decrement = increment_mode & 0x02 == 0x02;
 
     match addr_mode_bits {
-        0x00..=0x01 => AddressingMode::Atomic,
+        0x00..=0x02 => AddressingMode::Atomic,
         0x03 if increment => AddressingMode::MemoryInc,
         0x03 if decrement => AddressingMode::MemoryDec,
-        //TODO(Kay): We should rethink the ISA things are getting fiddly already...
         0x03 => AddressingMode::Memory,
+        //TODO(Kay): We should rethink the ISA things are getting fiddly already...
         _ => unreachable!(),
-    }
-}
-
-pub fn decoder(pattern: u32) -> Opcode {
-    let opcode = pattern & DECODER_OPCODE_MASK;
-    let dest = (pattern >> DECODER_DESTINATION_REGISTER_START) & DECODER_DESTINATION_REGISTER_MASK;
-    let src = (pattern >> DECODER_SOURCE_REGISTER_START) & DECODER_SOURCE_REGISTER_MASK;
-
-    //let src_immediate_value = src & 0x20;
-
-    let offset = (pattern >> DECODER_OFFSET_START) & DECODER_OFFSET_MASK;
-    let size = (pattern >> DECODER_SIZE_START) & DECODER_SIZE_MASK;
-    let increment = (pattern >> DECODER_INCREMENT_START) & DECODER_INCREMENT_MASK;
-
-    match opcode {
-        0x01 => Opcode::Move(MoveOpcode {
-            addr_mode: addressing_mode(increment, dest >> 4),
-            destination: Register::new(dest), //AddressingMode::Atomic(Register::new(dest)),
-            source: Register::new(src),       //AddressingMode::Atomic(Register::new(src)),
-            offset,
-            size: OpcodeSize::new(size),
-        }),
-        _ => todo!(),
     }
 }
