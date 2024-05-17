@@ -1,4 +1,6 @@
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+use std::fmt::Display;
+
+#[derive(Debug, PartialOrd, PartialEq, Eq, Clone, Copy)]
 pub enum Register {
     D0,
     D1,
@@ -17,7 +19,7 @@ pub enum Register {
     D14,
     D15,
 
-    A0,
+    A0 = 0x10,
     A1,
     A2,
     A3,
@@ -33,6 +35,45 @@ pub enum Register {
     A13,
     A14,
     A15,
+}
+
+impl Display for Register {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Register::D0 => write!(f, "D0"),
+            Register::D1 => write!(f, "D1"),
+            Register::D2 => write!(f, "D2"),
+            Register::D3 => write!(f, "D3"),
+            Register::D4 => write!(f, "D4"),
+            Register::D5 => write!(f, "D5"),
+            Register::D6 => write!(f, "D6"),
+            Register::D7 => write!(f, "D7"),
+            Register::D8 => write!(f, "D8"),
+            Register::D9 => write!(f, "D9"),
+            Register::D10 => write!(f, "D10"),
+            Register::D11 => write!(f, "D11"),
+            Register::D12 => write!(f, "D12"),
+            Register::D13 => write!(f, "D13"),
+            Register::D14 => write!(f, "D14"),
+            Register::D15 => write!(f, "D15"),
+            Register::A0 => write!(f, "A0"),
+            Register::A1 => write!(f, "A1"),
+            Register::A2 => write!(f, "A2"),
+            Register::A3 => write!(f, "A3"),
+            Register::A4 => write!(f, "A4"),
+            Register::A5 => write!(f, "A5"),
+            Register::A6 => write!(f, "A6"),
+            Register::A7 => write!(f, "A7"),
+            Register::A8 => write!(f, "A8"),
+            Register::A9 => write!(f, "A9"),
+            Register::A10 => write!(f, "A10"),
+            Register::A11 => write!(f, "A11"),
+            Register::A12 => write!(f, "A12"),
+            Register::A13 => write!(f, "A13"),
+            Register::A14 => write!(f, "A14"),
+            Register::A15 => write!(f, "A15"),
+        }
+    }
 }
 
 impl From<Register> for u32 {

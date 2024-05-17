@@ -2,6 +2,8 @@ mod cpu;
 
 use cpu::core;
 
+use crate::cpu::isa_generator;
+
 const MEMORY_SIZE: usize = 128 * (1024 * 1024);
 
 struct Memory {
@@ -33,7 +35,12 @@ impl RegisterFile {
 }
 
 fn main() {
-    let cpu = core::Cpu::new();
-    cpu.decoder(u32::MAX);
-    println!("Hello, world!");
+    //let cpu = core::Cpu::new();
+    //cpu.decoder(u32::MAX);
+    //println!("Hello, world!");
+
+    //YAY Combinatorical explosions -.-
+    for pattern in 0..=u32::MAX {
+        isa_generator::generate_isa_for_opcode(pattern);
+    }
 }

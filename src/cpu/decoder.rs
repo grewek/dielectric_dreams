@@ -1,3 +1,5 @@
+use std::fmt::{Binary, Display, LowerHex};
+
 use super::{
     addressing_modes::AddressingMode,
     opcode::{MoveOpcode, Opcode},
@@ -17,7 +19,9 @@ const DECODER_SIZE_MASK: u32 = 0x03;
 const DECODER_INCREMENT_START: u32 = 30;
 const DECODER_INCREMENT_MASK: u32 = 0x03;
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BitPattern {
+    pattern: u32,
     opcode: u32,
     dest_reg: u32,
     src_reg: u32,
@@ -29,6 +33,7 @@ pub struct BitPattern {
 impl BitPattern {
     pub fn new(pattern: u32) -> Self {
         Self {
+            pattern,
             opcode: pattern & DECODER_OPCODE_MASK,
             dest_reg: (pattern >> DECODER_DESTINATION_REGISTER_START)
                 & DECODER_DESTINATION_REGISTER_MASK,
@@ -37,6 +42,24 @@ impl BitPattern {
             size: (pattern >> DECODER_SIZE_START) & DECODER_SIZE_MASK,
             increment: (pattern >> DECODER_INCREMENT_START) & DECODER_INCREMENT_MASK,
         }
+    }
+}
+
+impl Display for BitPattern {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.pattern)
+    }
+}
+
+impl Binary for BitPattern {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:032b}", self.pattern)
+    }
+}
+
+impl LowerHex for BitPattern {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:08x}", self.pattern)
     }
 }
 
@@ -58,7 +81,8 @@ impl From<BitPattern> for Opcode {
                 offset: value.offset,
                 size: OpcodeSize::new(value.size),
             }),
-            _ => unreachable!(),
+
+            _ => Opcode::Unknown,
         }
     }
 }
