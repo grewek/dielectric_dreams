@@ -40,7 +40,5 @@ fn main() {
     //println!("Hello, world!");
 
     //YAY Combinatorical explosions -.-
-    for pattern in 0..=u32::MAX {
-        isa_generator::generate_isa_for_opcode(pattern);
-    }
+    isa_generator::generate_valid_atomic_move_listing();
 }
