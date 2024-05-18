@@ -44,4 +44,7 @@ fn main() {
     isa_generator::generate_valid_memory_source_listing();
     isa_generator::genrate_valid_memory_destination_listing();
     isa_generator::generate_valid_memory_move_inc_source_listing();
+    isa_generator::generate_valid_memory_move_dec_source_listing();
+    isa_generator::generate_valid_memory_move_inc_destination_listing();
+    isa_generator::generate_valid_memory_move_dec_destination_listing();
 }

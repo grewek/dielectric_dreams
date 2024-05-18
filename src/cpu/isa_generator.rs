@@ -69,7 +69,7 @@ pub fn genrate_valid_memory_destination_listing() {
 
 pub fn generate_valid_memory_move_inc_source_listing() {
     for opcode_size in 0..3 {
-        for dest_pattern in 0..32 {
+        for dest_pattern in 0..16 {
             for src_pattern in 16..32 {
                 let memory_bit_mask = 1 << 5;
                 let src_pattern = src_pattern | memory_bit_mask;
@@ -82,8 +82,48 @@ pub fn generate_valid_memory_move_inc_source_listing() {
     }
 }
 
+//TODO(Kay): We probably can collapse these function into one!
 pub fn generate_valid_memory_move_dec_source_listing() {
-    todo!()
+    for opcode_size in 0..3 {
+        for dest_pattern in 0..16 {
+            for src_pattern in 16..32 {
+                let memory_bit_mask = 1 << 5;
+                let src_pattern = src_pattern | memory_bit_mask;
+
+                let pattern =
+                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size, 2);
+                generate_isa_for_opcode(pattern)
+            }
+        }
+    }
+}
+
+pub fn generate_valid_memory_move_inc_destination_listing() {
+    for opcode_size in 0..3 {
+        for dest_pattern in 16..32 {
+            let memory_bit_mask = 1 << 5;
+            let dest_pattern = dest_pattern | memory_bit_mask;
+            for src_pattern in 0..16 {
+                let pattern =
+                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size, 1);
+                generate_isa_for_opcode(pattern)
+            }
+        }
+    }
+}
+
+pub fn generate_valid_memory_move_dec_destination_listing() {
+    for opcode_size in 0..3 {
+        for dest_pattern in 16..32 {
+            let memory_bit_mask = 1 << 5;
+            let dest_pattern = dest_pattern | memory_bit_mask;
+            for src_pattern in 0..16 {
+                let pattern =
+                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size, 2);
+                generate_isa_for_opcode(pattern)
+            }
+        }
+    }
 }
 
 pub fn generate_atomic_move_opcode(
@@ -127,7 +167,13 @@ pub fn generate_isa_for_opcode(pattern: u32) {
                     generate_memory_registers(pattern.increment, data.destination, data.source)
                 )
             }
-            super::addressing_modes::AddressingMode::MemoryDec => (),
+            super::addressing_modes::AddressingMode::MemoryDec => println!(
+                "{:b}\t{:x}\tMOVE.{}\t{}",
+                pattern,
+                pattern,
+                data.size,
+                generate_memory_registers(pattern.increment, data.destination, data.source)
+            ),
         },
 
         Opcode::Unknown => (),
