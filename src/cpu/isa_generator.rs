@@ -13,9 +13,9 @@ pub fn generate_memory_registers(dest_reg: Register, src_reg: Register) -> Strin
 }
 
 pub fn generate_valid_atomic_move_listing() {
-    for dest_pattern in 0..1 {
-        for src_pattern in 0..32 {
-            for opcode_size in 0..3 {
+    for opcode_size in 0..3 {
+        for dest_pattern in 0..32 {
+            for src_pattern in 0..32 {
                 let pattern =
                     generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size);
                 generate_isa_for_opcode(pattern)
@@ -23,6 +23,45 @@ pub fn generate_valid_atomic_move_listing() {
         }
     }
 }
+
+pub fn generate_valid_memory_source_listing() {
+    for opcode_size in 0..3 {
+        for dest_pattern in 0..32 {
+            for src_pattern in 16..32 {
+                let memory_bit_mask = 1 << 5;
+                let src_pattern = src_pattern | memory_bit_mask;
+
+                let pattern =
+                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size);
+                generate_isa_for_opcode(pattern)
+            }
+        }
+    }
+}
+
+pub fn genrate_valid_memory_destination_listing() {
+    for opcode_size in 0..3 {
+        for dest_pattern in 16..32 {
+            let memory_bit_mask = 1 << 5;
+            let dest_pattern = dest_pattern | memory_bit_mask;
+
+            for src_pattern in 0..32 {
+                let pattern =
+                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size);
+                generate_isa_for_opcode(pattern)
+            }
+        }
+    }
+}
+
+pub fn generate_valid_memory_inc_move_listing() {
+    todo!()
+}
+
+pub fn generate_valid_memory_dec_move_listing() {
+    todo!()
+}
+
 pub fn generate_atomic_move_opcode(
     dest_pattern: u32,
     src_pattern: u32,

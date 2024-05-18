@@ -41,4 +41,6 @@ fn main() {
 
     //YAY Combinatorical explosions -.-
     isa_generator::generate_valid_atomic_move_listing();
+    isa_generator::generate_valid_memory_source_listing();
+    isa_generator::genrate_valid_memory_destination_listing();
 }
