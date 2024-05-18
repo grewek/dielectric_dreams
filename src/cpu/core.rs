@@ -1,9 +1,5 @@
-use super::addressing_modes::AddressingMode;
 use super::decoder::BitPattern;
-use super::opcode::MoveOpcode;
 use super::opcode::Opcode;
-use super::opcode_size::OpcodeSize;
-use super::register::Register;
 use crate::Memory;
 use crate::RegisterFile;
 
@@ -32,6 +28,11 @@ impl Cpu {
 
 #[cfg(test)]
 mod test {
+    use crate::cpu::{
+        addressing_modes::AddressingMode, opcode::MoveOpcode, opcode_size::OpcodeSize,
+        register::Register,
+    };
+
     use super::*;
 
     static ALL_REGISTERS: [Register; 32] = [
