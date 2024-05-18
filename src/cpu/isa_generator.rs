@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use super::{decoder::BitPattern, opcode::Opcode, register::Register};
 
 pub fn generate_memory_registers(mode: u32, dest_reg: Register, src_reg: Register) -> String {
@@ -25,105 +27,186 @@ pub fn generate_memory_registers(mode: u32, dest_reg: Register, src_reg: Registe
     unreachable!()
 }
 
-pub fn generate_valid_atomic_move_listing() {
+fn generate_listing_for(
+    description: &str,
+    opcode: u32,
+    dest_registers: (&[Register], bool),
+    src_registers: (&[Register], bool),
+    offset: u32,
+    inc_mode: u32,
+) {
+    println!("{}", description);
     for opcode_size in 0..3 {
-        for dest_pattern in 0..32 {
-            for src_pattern in 0..32 {
-                let pattern =
-                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size, 0);
-                generate_isa_for_opcode(pattern)
+        let (dest_registers, dest_memory_loc) = dest_registers;
+        let (src_registers, src_memory_loc) = src_registers;
+
+        for dest_pattern in dest_registers {
+            let dest = *dest_pattern;
+            let dest_pattern: u32 = if dest_memory_loc {
+                let memory_bit_mask: u32 = 1 << 5;
+                let dest: u32 = dest.into();
+                dest | memory_bit_mask
+            } else {
+                dest.into()
+            };
+
+            for src_pattern in src_registers {
+                let src = *src_pattern;
+                let src_pattern: u32 = if src_memory_loc {
+                    let memory_bit_mask: u32 = 1 << 5;
+                    let src: u32 = src.into();
+                    src | memory_bit_mask
+                } else {
+                    src.into()
+                };
+                let pattern = generate_atomic_move_opcode(
+                    dest_pattern,
+                    src_pattern,
+                    offset,
+                    opcode_size,
+                    inc_mode,
+                );
+                generate_isa_for_opcode(pattern);
             }
         }
     }
 }
 
-pub fn generate_valid_memory_source_listing() {
-    for opcode_size in 0..3 {
-        for dest_pattern in 0..32 {
-            for src_pattern in 16..32 {
-                let memory_bit_mask = 1 << 5;
-                let src_pattern = src_pattern | memory_bit_mask;
+const ALL_REGISTERS: [Register; 32] = [
+    Register::D0,
+    Register::D1,
+    Register::D2,
+    Register::D3,
+    Register::D4,
+    Register::D5,
+    Register::D6,
+    Register::D7,
+    Register::D8,
+    Register::D9,
+    Register::D10,
+    Register::D11,
+    Register::D12,
+    Register::D13,
+    Register::D14,
+    Register::D15,
+    Register::A0,
+    Register::A1,
+    Register::A2,
+    Register::A3,
+    Register::A4,
+    Register::A5,
+    Register::A6,
+    Register::A7,
+    Register::A8,
+    Register::A9,
+    Register::A10,
+    Register::A11,
+    Register::A12,
+    Register::A13,
+    Register::A14,
+    Register::A15,
+];
 
-                let pattern =
-                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size, 0);
-                generate_isa_for_opcode(pattern)
-            }
-        }
-    }
-}
+const DATA_REGISTERS: [Register; 16] = [
+    Register::D0,
+    Register::D1,
+    Register::D2,
+    Register::D3,
+    Register::D4,
+    Register::D5,
+    Register::D6,
+    Register::D7,
+    Register::D8,
+    Register::D9,
+    Register::D10,
+    Register::D11,
+    Register::D12,
+    Register::D13,
+    Register::D14,
+    Register::D15,
+];
 
-pub fn genrate_valid_memory_destination_listing() {
-    for opcode_size in 0..3 {
-        for dest_pattern in 0..16 {
-            let memory_bit_mask = 1 << 5;
-            let dest_pattern = dest_pattern | memory_bit_mask;
+const ADDRESS_REGISTERS: [Register; 16] = [
+    Register::A0,
+    Register::A1,
+    Register::A2,
+    Register::A3,
+    Register::A4,
+    Register::A5,
+    Register::A6,
+    Register::A7,
+    Register::A8,
+    Register::A9,
+    Register::A10,
+    Register::A11,
+    Register::A12,
+    Register::A13,
+    Register::A14,
+    Register::A15,
+];
 
-            for src_pattern in 16..32 {
-                let pattern =
-                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size, 0);
-                generate_isa_for_opcode(pattern)
-            }
-        }
-    }
-}
+const OPCODE_MOVE: u32 = 0x01;
 
-pub fn generate_valid_memory_move_inc_source_listing() {
-    for opcode_size in 0..3 {
-        for dest_pattern in 0..16 {
-            for src_pattern in 16..32 {
-                let memory_bit_mask = 1 << 5;
-                let src_pattern = src_pattern | memory_bit_mask;
+pub fn generate_isa() {
+    generate_listing_for(
+        "Register to Register Moves",
+        OPCODE_MOVE,
+        (&ALL_REGISTERS, false),
+        (&ALL_REGISTERS, false),
+        0,
+        0,
+    );
+    generate_listing_for(
+        "Memory Source to Register Moves",
+        OPCODE_MOVE,
+        (&DATA_REGISTERS, false),
+        (&ADDRESS_REGISTERS, true),
+        0,
+        0,
+    );
+    generate_listing_for(
+        "Register Value to Memory Location",
+        OPCODE_MOVE,
+        (&ADDRESS_REGISTERS, true),
+        (&DATA_REGISTERS, false),
+        0,
+        0,
+    );
 
-                let pattern =
-                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size, 1);
-                generate_isa_for_opcode(pattern)
-            }
-        }
-    }
-}
+    generate_listing_for(
+        "Memory Source to Registers Moves with Increment",
+        OPCODE_MOVE,
+        (&DATA_REGISTERS, false),
+        (&ADDRESS_REGISTERS, true),
+        0,
+        1,
+    );
+    generate_listing_for(
+        "Memory Source to Registers Moves with Decrement",
+        OPCODE_MOVE,
+        (&DATA_REGISTERS, false),
+        (&ADDRESS_REGISTERS, true),
+        0,
+        2,
+    );
 
-//TODO(Kay): We probably can collapse these function into one!
-pub fn generate_valid_memory_move_dec_source_listing() {
-    for opcode_size in 0..3 {
-        for dest_pattern in 0..16 {
-            for src_pattern in 16..32 {
-                let memory_bit_mask = 1 << 5;
-                let src_pattern = src_pattern | memory_bit_mask;
+    generate_listing_for(
+        "Data Register to Memory Location with Increment",
+        OPCODE_MOVE,
+        (&ADDRESS_REGISTERS, true),
+        (&DATA_REGISTERS, false),
+        0,
+        1,
+    );
 
-                let pattern =
-                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size, 2);
-                generate_isa_for_opcode(pattern)
-            }
-        }
-    }
-}
-
-pub fn generate_valid_memory_move_inc_destination_listing() {
-    for opcode_size in 0..3 {
-        for dest_pattern in 16..32 {
-            let memory_bit_mask = 1 << 5;
-            let dest_pattern = dest_pattern | memory_bit_mask;
-            for src_pattern in 0..16 {
-                let pattern =
-                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size, 1);
-                generate_isa_for_opcode(pattern)
-            }
-        }
-    }
-}
-
-pub fn generate_valid_memory_move_dec_destination_listing() {
-    for opcode_size in 0..3 {
-        for dest_pattern in 16..32 {
-            let memory_bit_mask = 1 << 5;
-            let dest_pattern = dest_pattern | memory_bit_mask;
-            for src_pattern in 0..16 {
-                let pattern =
-                    generate_atomic_move_opcode(dest_pattern, src_pattern, 0, opcode_size, 2);
-                generate_isa_for_opcode(pattern)
-            }
-        }
-    }
+    generate_listing_for(
+        "Data Register to Memory Location with Decrement",
+        OPCODE_MOVE,
+        (&ADDRESS_REGISTERS, true),
+        (&DATA_REGISTERS, false),
+        0,
+        2,
+    );
 }
 
 pub fn generate_atomic_move_opcode(
