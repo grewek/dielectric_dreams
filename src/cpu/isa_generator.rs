@@ -60,6 +60,7 @@ fn generate_listing_for(
                     src.into()
                 };
                 let pattern = generate_atomic_move_opcode(
+                    opcode,
                     dest_pattern,
                     src_pattern,
                     offset,
@@ -210,6 +211,7 @@ pub fn generate_isa() {
 }
 
 pub fn generate_atomic_move_opcode(
+    opcode: u32,
     dest_pattern: u32,
     src_pattern: u32,
     offset: u32,
@@ -221,7 +223,7 @@ pub fn generate_atomic_move_opcode(
         | (offset << 22)
         | (src_pattern << 16)
         | (dest_pattern << 10)
-        | 0x01
+        | opcode
 }
 
 pub fn generate_isa_for_opcode(pattern: u32) {
