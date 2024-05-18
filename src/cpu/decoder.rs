@@ -27,7 +27,8 @@ pub struct BitPattern {
     src_reg: u32,
     offset: u32,
     size: u32,
-    increment: u32,
+    //TODO(Kay): Remove the pub statement by making increment available in the Opcode structure!
+    pub increment: u32,
 }
 
 impl BitPattern {
