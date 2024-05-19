@@ -1,6 +1,5 @@
-[package]
-name = "dielectric_dreams"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
+[workspace]
+resolver= "2"
+members = [
+    "dielectric_cpu", "dielectric_isa_generator",
+]

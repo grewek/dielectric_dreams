@@ -3,5 +3,12 @@
 version = 3
 
 [[package]]
-name = "dielectric_dreams"
+name = "dielectric_cpu"
 version = "0.1.0"
+
+[[package]]
+name = "dielectric_isa_generator"
+version = "0.1.0"
+dependencies = [
+ "dielectric_cpu",
+]
