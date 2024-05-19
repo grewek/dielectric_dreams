@@ -1,3 +1,5 @@
+use std::{fs::File, io::Write};
+
 use dielectric_cpu::cpu::{
     addressing_modes, decoder::BitPattern, opcode::Opcode, register::Register,
 };
@@ -28,6 +30,7 @@ pub fn generate_memory_registers(mode: u32, dest_reg: Register, src_reg: Registe
 }
 
 fn generate_listing_for(
+    file: &mut File,
     description: &str,
     opcode: u32,
     dest_registers: (&[Register], bool),
@@ -35,7 +38,7 @@ fn generate_listing_for(
     offset: u32,
     inc_mode: u32,
 ) {
-    println!("{}", description);
+    writeln!(file, "{}", description).unwrap();
     for opcode_size in 0..3 {
         let (dest_registers, dest_memory_loc) = dest_registers;
         let (src_registers, src_memory_loc) = src_registers;
@@ -67,7 +70,7 @@ fn generate_listing_for(
                     opcode_size,
                     inc_mode,
                 );
-                generate_isa_for_opcode(pattern);
+                generate_isa_for_opcode(file, pattern);
             }
         }
     }
@@ -148,8 +151,9 @@ const ADDRESS_REGISTERS: [Register; 16] = [
 
 const OPCODE_MOVE: u32 = 0x01;
 
-pub fn generate_isa() {
+pub fn generate_isa(file: &mut File) {
     generate_listing_for(
+        file,
         "Register to Register Moves",
         OPCODE_MOVE,
         (&ALL_REGISTERS, false),
@@ -158,6 +162,7 @@ pub fn generate_isa() {
         0,
     );
     generate_listing_for(
+        file,
         "Memory Source to Register Moves",
         OPCODE_MOVE,
         (&DATA_REGISTERS, false),
@@ -166,6 +171,7 @@ pub fn generate_isa() {
         0,
     );
     generate_listing_for(
+        file,
         "Register Value to Memory Location",
         OPCODE_MOVE,
         (&ADDRESS_REGISTERS, true),
@@ -175,6 +181,7 @@ pub fn generate_isa() {
     );
 
     generate_listing_for(
+        file,
         "Memory Source to Registers Moves with Increment",
         OPCODE_MOVE,
         (&DATA_REGISTERS, false),
@@ -183,6 +190,7 @@ pub fn generate_isa() {
         1,
     );
     generate_listing_for(
+        file,
         "Memory Source to Registers Moves with Decrement",
         OPCODE_MOVE,
         (&DATA_REGISTERS, false),
@@ -192,6 +200,7 @@ pub fn generate_isa() {
     );
 
     generate_listing_for(
+        file,
         "Data Register to Memory Location with Increment",
         OPCODE_MOVE,
         (&ADDRESS_REGISTERS, true),
@@ -201,6 +210,7 @@ pub fn generate_isa() {
     );
 
     generate_listing_for(
+        file,
         "Data Register to Memory Location with Decrement",
         OPCODE_MOVE,
         (&ADDRESS_REGISTERS, true),
@@ -227,45 +237,51 @@ pub fn generate_atomic_move_opcode(
         | opcode
 }
 
-pub fn generate_isa_for_opcode(pattern: u32) {
+pub fn generate_isa_for_opcode(file: &mut File, pattern: u32) {
     let pattern = BitPattern::new(pattern);
     let opcode = pattern.into();
 
     match opcode {
         Opcode::Move(data) => match data.addr_mode {
-            addressing_modes::AddressingMode::Atomic => println!(
+            addressing_modes::AddressingMode::Atomic => writeln!(
+                file,
                 "{:b}\t{:x}\tMOVE.{}\t{},{}",
                 pattern, pattern, data.size, data.destination, data.source
-            ),
-            addressing_modes::AddressingMode::Memory => println!(
+            )
+            .unwrap(),
+            addressing_modes::AddressingMode::Memory => writeln!(
+                file,
                 "{:b}\t{:x}\tMOVE.{}\t{}",
                 pattern,
                 pattern,
                 data.size,
                 generate_memory_registers(pattern.increment, data.destination, data.source)
-            ),
-            addressing_modes::AddressingMode::MemoryInc => {
-                println!(
-                    "{:b}\t{:x}\tMOVE.{}\t{}",
-                    pattern,
-                    pattern,
-                    data.size,
-                    generate_memory_registers(pattern.increment, data.destination, data.source)
-                )
-            }
-            addressing_modes::AddressingMode::MemoryDec => println!(
+            )
+            .unwrap(),
+            addressing_modes::AddressingMode::MemoryInc => writeln!(
+                file,
                 "{:b}\t{:x}\tMOVE.{}\t{}",
                 pattern,
                 pattern,
                 data.size,
                 generate_memory_registers(pattern.increment, data.destination, data.source)
-            ),
+            )
+            .unwrap(),
+            addressing_modes::AddressingMode::MemoryDec => writeln!(
+                file,
+                "{:b}\t{:x}\tMOVE.{}\t{}",
+                pattern,
+                pattern,
+                data.size,
+                generate_memory_registers(pattern.increment, data.destination, data.source)
+            )
+            .unwrap(),
         },
-
         Opcode::Unknown => (),
     }
 }
 
 fn main() {
-    generate_isa()
+    let mut output = File::create("docs/generated_isa.txt").unwrap();
+    generate_isa(&mut output)
 }
