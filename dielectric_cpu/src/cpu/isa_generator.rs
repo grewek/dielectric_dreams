@@ -210,6 +210,7 @@ pub fn generate_isa() {
     );
 }
 
+//TODO(Kay): Function renaming!
 pub fn generate_atomic_move_opcode(
     opcode: u32,
     dest_pattern: u32,
