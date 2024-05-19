@@ -2,8 +2,6 @@ pub mod cpu;
 
 use cpu::core;
 
-use crate::cpu::isa_generator;
-
 const MEMORY_SIZE: usize = 128 * (1024 * 1024);
 
 struct Memory {
