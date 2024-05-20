@@ -17,17 +17,12 @@ impl Memory {
 }
 
 struct RegisterFile {
-    //D0..D15
-    data_registers: [u32; 16],
-    //A0..A15
-    address_registers: [u32; 16],
+    //D0..D15 & A0..A15
+    registers: [u32; 32],
 }
 
 impl RegisterFile {
     fn new() -> Self {
-        Self {
-            data_registers: [0; 16],
-            address_registers: [0; 16],
-        }
+        Self { registers: [0; 32] }
     }
 }
