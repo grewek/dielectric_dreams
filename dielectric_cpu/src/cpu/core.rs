@@ -1,4 +1,6 @@
+use super::addressing_modes::AddressingMode;
 use super::decoder::BitPattern;
+use super::opcode::MoveOpcode;
 use super::opcode::Opcode;
 use crate::Memory;
 use crate::RegisterFile;
@@ -23,6 +25,55 @@ impl Cpu {
     pub fn decoder(&self, to_decode: u32) -> Opcode {
         let raw_opcode = BitPattern::new(to_decode);
         raw_opcode.into()
+    }
+
+    pub fn execute(&mut self, opcode: Opcode) {
+        match opcode {
+            Opcode::Move(decoded_data) => self.execute_move(&decoded_data),
+            Opcode::Unknown => todo!(),
+        }
+    }
+
+    pub fn execute_move(&mut self, arguments: &MoveOpcode) {
+        match arguments {
+            MoveOpcode {
+                addr_mode: AddressingMode::Atomic,
+                destination,
+                source,
+                offset,
+                size,
+            } => {
+                let destination = *destination;
+                let source = *source;
+                let dest_index: u32 = destination.into();
+                let source_index: u32 = source.into();
+                let data_to_write =
+                    size.retrieve_data(self.registers.registers[source_index as usize]);
+
+                self.registers.registers[dest_index as usize] = data_to_write;
+            }
+            MoveOpcode {
+                addr_mode: AddressingMode::Memory,
+                destination,
+                source,
+                offset,
+                size,
+            } => todo!(),
+            MoveOpcode {
+                addr_mode: AddressingMode::MemoryInc,
+                destination,
+                source,
+                offset,
+                size,
+            } => todo!(),
+            MoveOpcode {
+                addr_mode: AddressingMode::MemoryDec,
+                destination,
+                source,
+                offset,
+                size,
+            } => todo!(),
+        }
     }
 }
 
@@ -193,6 +244,39 @@ mod test {
                 assert_eq!(result, expected, "Failed {:?} {:?}", result, expected)
             }
         }
+    }
+
+    #[test]
+    fn test_move_dword_registers_execution() {
+        let opcode = generate_opcode(Register::D0, Register::D5, 0, OpcodeSize::Dword);
+        let mut cpu = Cpu::new();
+        cpu.registers.registers[5] = 0xAABBCCDD;
+        let opcode = cpu.decoder(opcode);
+        cpu.execute(opcode);
+
+        assert_eq!(cpu.registers.registers[0], cpu.registers.registers[5]);
+    }
+
+    #[test]
+    fn test_move_word_registers_execution() {
+        let opcode = generate_opcode(Register::D1, Register::D3, 0, OpcodeSize::Word);
+        let mut cpu = Cpu::new();
+        cpu.registers.registers[3] = 0xAABBCCDD;
+        let opcode = cpu.decoder(opcode);
+        cpu.execute(opcode);
+
+        assert_eq!(cpu.registers.registers[1], 0x0000CCDD);
+    }
+
+    #[test]
+    fn test_move_byte_registers_execution() {
+        let opcode = generate_opcode(Register::D2, Register::D15, 0, OpcodeSize::Byte);
+        let mut cpu = Cpu::new();
+        cpu.registers.registers[15] = 0xAABBCCDD;
+        let opcode = cpu.decoder(opcode);
+        cpu.execute(opcode);
+
+        assert_eq!(cpu.registers.registers[2], 0x000000DD);
     }
 
     #[test]
