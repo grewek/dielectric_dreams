@@ -27,6 +27,7 @@ impl Cpu {
         raw_opcode.into()
     }
 
+    //TODO(Kay): Refactor to the Opcode enum!
     pub fn execute(&mut self, opcode: Opcode) {
         match opcode {
             Opcode::Move(decoded_data) => self.execute_move(&decoded_data),
@@ -34,6 +35,7 @@ impl Cpu {
         }
     }
 
+    //TODO(Kay): refactor this into the Moveopcode struct!
     pub fn execute_move(&mut self, arguments: &MoveOpcode) {
         match arguments {
             MoveOpcode {
@@ -43,6 +45,8 @@ impl Cpu {
                 offset,
                 size,
             } => {
+                //TODO(Kay): Figure out if these should affect any flags, in most ISAs i know these
+                //           do __not__ affect the flags in any way or form!
                 let destination = *destination;
                 let source = *source;
                 let dest_index: u32 = destination.into();
