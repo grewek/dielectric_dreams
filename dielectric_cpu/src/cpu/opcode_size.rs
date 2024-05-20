@@ -38,4 +38,12 @@ impl OpcodeSize {
             _ => unreachable!(),
         }
     }
+
+    pub fn retrieve_data(&self, data: u32) -> u32 {
+        match self {
+            OpcodeSize::Byte => data & 0x000000FF,
+            OpcodeSize::Word => data & 0x0000FFFF,
+            OpcodeSize::Dword => data,
+        }
+    }
 }
