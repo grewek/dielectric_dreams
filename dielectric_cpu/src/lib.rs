@@ -1,6 +1,6 @@
 pub mod cpu;
 
-use cpu::core;
+use cpu::{core, opcode_size::OpcodeSize};
 
 const MEMORY_SIZE: usize = 128 * (1024 * 1024);
 
@@ -13,6 +13,22 @@ impl Memory {
         Self {
             bytes: vec![0; MEMORY_SIZE].into_boxed_slice().try_into().unwrap(),
         }
+    }
+
+    fn memory_bus_read(&self, size: &OpcodeSize, address: u32) -> u32 {
+        match size {
+            OpcodeSize::Byte => self.read_byte(address),
+            OpcodeSize::Word => self.read_word(address),
+            OpcodeSize::Dword => self.read_dword(address),
+        }
+    }
+
+    fn read_byte(&self, address: u32) -> u32 {
+        self.bytes[address as usize] as u32
+    }
+
+    fn read_word(&self, address: u32) -> u32 {
+        (self.bytes[address as usize] as u32) << 8 | (self.bytes[(address + 1) as usize] as u32)
     }
 
     fn read_dword(&self, address: u32) -> u32 {
