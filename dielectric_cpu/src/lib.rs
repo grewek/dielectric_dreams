@@ -14,6 +14,15 @@ impl Memory {
             bytes: vec![0; MEMORY_SIZE].into_boxed_slice().try_into().unwrap(),
         }
     }
+
+    fn read_dword(&self, address: u32) -> u32 {
+        println!("{}", self.bytes.len());
+        //NOTE: For now we use big endian !
+        (self.bytes[address as usize] as u32) << 24
+            | (self.bytes[(address + 1) as usize] as u32) << 16
+            | (self.bytes[(address + 2) as usize] as u32) << 8
+            | (self.bytes[(address + 3) as usize] as u32)
+    }
 }
 
 struct RegisterFile {
