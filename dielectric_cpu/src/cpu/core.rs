@@ -81,7 +81,20 @@ impl Cpu {
                 source,
                 offset,
                 size,
-            } => todo!(),
+            } => {
+                let destination = *destination;
+                let source = *source;
+                let dest_index: u32 = destination.into();
+                let source_index: u32 = source.into();
+
+                let data_to_write = size.retrieve_data(
+                    self.memory
+                        .memory_bus_read(size, self.registers.registers[source_index as usize]),
+                );
+
+                self.registers.registers[dest_index as usize] = data_to_write;
+                self.registers.registers[source_index as usize] += 1;
+            }
             MoveOpcode {
                 addr_mode: AddressingMode::MemoryDec,
                 destination,
