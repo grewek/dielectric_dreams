@@ -70,7 +70,7 @@ impl Cpu {
 
                 let data_to_write = size.retrieve_data(
                     self.memory
-                        .read_dword(self.registers.registers[source_index as usize]),
+                        .memory_bus_read(size, self.registers.registers[source_index as usize]),
                 );
 
                 self.registers.registers[dest_index as usize] = data_to_write;
