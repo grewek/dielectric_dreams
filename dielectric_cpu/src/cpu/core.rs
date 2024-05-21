@@ -297,6 +297,23 @@ mod test {
     }
 
     #[test]
+    fn test_move_memory_byte_execution() {
+        let opcode = generate_memory_move_opcode(Register::D0, Register::A0, 0, OpcodeSize::Byte);
+
+        let mut cpu = Cpu::new();
+        cpu.registers.registers[16] = 0x7000BA5;
+        let opcode = cpu.decoder(opcode);
+
+        cpu.memory.bytes[0x7000BA5] = 0xAA;
+        cpu.memory.bytes[0x7000BA6] = 0xBB;
+        cpu.memory.bytes[0x7000BA7] = 0xCC;
+        cpu.memory.bytes[0x7000BA8] = 0xDD;
+        cpu.execute(opcode);
+
+        assert_eq!(cpu.registers.registers[0], 0x000000AA);
+    }
+
+    #[test]
     fn test_move_dword_registers_execution() {
         let opcode = generate_opcode(Register::D0, Register::D5, 0, OpcodeSize::Dword);
         let mut cpu = Cpu::new();
