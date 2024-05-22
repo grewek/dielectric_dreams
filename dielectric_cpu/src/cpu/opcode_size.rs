@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::MemoryWriteCommand;
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum OpcodeSize {
     Byte,
@@ -44,6 +46,20 @@ impl OpcodeSize {
             OpcodeSize::Byte => data & 0x000000FF,
             OpcodeSize::Word => data & 0x0000FFFF,
             OpcodeSize::Dword => data,
+        }
+    }
+
+    pub fn memory_write_command(&self, address: u32, value: u32) -> MemoryWriteCommand {
+        match self {
+            OpcodeSize::Byte => MemoryWriteCommand::WriteByte {
+                address,
+                value: value as u8,
+            },
+            OpcodeSize::Word => MemoryWriteCommand::WriteWord {
+                address,
+                value: value as u16,
+            },
+            OpcodeSize::Dword => MemoryWriteCommand::WriteDword { address, value },
         }
     }
 }
