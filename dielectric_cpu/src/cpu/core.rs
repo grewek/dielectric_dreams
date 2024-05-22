@@ -68,12 +68,29 @@ impl Cpu {
                 let dest_index: u32 = destination.into();
                 let source_index: u32 = source.into();
 
-                let data_to_write = size.retrieve_data(
-                    self.memory
-                        .memory_bus_read(size, self.registers.registers[source_index as usize]),
-                );
+                if source_index >= 0x10 && dest_index >= 0x10 {
+                    unreachable!(
+                        "illegal move instruction with two memory operands reached execution stage"
+                    )
+                }
 
-                self.registers.registers[dest_index as usize] = data_to_write;
+                if source_index >= 0x10 {
+                    let data_to_write = size.retrieve_data(
+                        self.memory
+                            .memory_bus_read(size, self.registers.registers[source_index as usize]),
+                    );
+
+                    self.registers.registers[dest_index as usize] = data_to_write;
+                } else if dest_index >= 0x10 {
+                    let target_address = self.registers.registers[dest_index as usize];
+                    let data_to_write =
+                        size.retrieve_data(self.registers.registers[source_index as usize]);
+                    let command = size.memory_write_command(target_address, data_to_write);
+
+                    self.memory.memory_bus_write(command);
+                } else {
+                    unreachable!("illegal move memory instruction with two data registers reached execution stage")
+                }
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemoryInc,
