@@ -4,10 +4,10 @@ use cpu::{core, opcode_size::OpcodeSize};
 
 const MEMORY_SIZE: usize = 128 * (1024 * 1024);
 
-enum MemoryWriteCommand {
-    WriteByte { address: u32, value: u8 },
-    WriteWord { address: u32, value: u16 },
-    WriteDword { address: u32, value: u32 },
+enum MemoryWrite {
+    Byte { address: u32, value: u8 },
+    Word { address: u32, value: u16 },
+    Dword { address: u32, value: u32 },
 }
 
 struct Memory {
@@ -29,11 +29,11 @@ impl Memory {
         }
     }
 
-    fn memory_bus_write(&mut self, command: MemoryWriteCommand) {
+    fn memory_bus_write(&mut self, command: MemoryWrite) {
         match command {
-            MemoryWriteCommand::WriteByte { address, value } => self.write_byte(address, value),
-            MemoryWriteCommand::WriteWord { address, value } => self.write_word(address, value),
-            MemoryWriteCommand::WriteDword { address, value } => self.write_dword(address, value),
+            MemoryWrite::Byte { address, value } => self.write_byte(address, value),
+            MemoryWrite::Word { address, value } => self.write_word(address, value),
+            MemoryWrite::Dword { address, value } => self.write_dword(address, value),
         }
     }
 
