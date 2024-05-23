@@ -263,7 +263,20 @@ mod test {
         result
     }
 
-    fn generate_memory_move_opcode(
+    fn generate_memory_move_destination_opcode(
+        dest: Register,
+        src: Register,
+        offset: u32,
+        size: OpcodeSize,
+    ) -> u32 {
+        let size: u32 = size.into();
+        let src: u32 = src.into();
+        let dest: u32 = generate_memory_source(dest);
+        let result = (size << 28) | (offset << 22) | (src << 16) | (dest << 10) | 0x01;
+        dbg!(result);
+        result
+    }
+    fn generate_memory_move_source_opcode(
         dest: Register,
         src: Register,
         offset: u32,
@@ -294,7 +307,8 @@ mod test {
 
     #[test]
     fn test_move_memory_dword_execution() {
-        let opcode = generate_memory_move_opcode(Register::D0, Register::A0, 0, OpcodeSize::Dword);
+        let opcode =
+            generate_memory_move_source_opcode(Register::D0, Register::A0, 0, OpcodeSize::Dword);
 
         let mut cpu = Cpu::new();
         cpu.registers.registers[16] = 0x7000BA5;
@@ -311,7 +325,8 @@ mod test {
 
     #[test]
     fn test_move_memory_word_execution() {
-        let opcode = generate_memory_move_opcode(Register::D0, Register::A0, 0, OpcodeSize::Word);
+        let opcode =
+            generate_memory_move_source_opcode(Register::D0, Register::A0, 0, OpcodeSize::Word);
 
         let mut cpu = Cpu::new();
         cpu.registers.registers[16] = 0x7000BA5;
@@ -328,7 +343,8 @@ mod test {
 
     #[test]
     fn test_move_memory_byte_execution() {
-        let opcode = generate_memory_move_opcode(Register::D0, Register::A0, 0, OpcodeSize::Byte);
+        let opcode =
+            generate_memory_move_source_opcode(Register::D0, Register::A0, 0, OpcodeSize::Byte);
 
         let mut cpu = Cpu::new();
         cpu.registers.registers[16] = 0x7000BA5;
@@ -377,11 +393,75 @@ mod test {
     }
 
     #[test]
+    fn test_move_byte_register_into_memory_execution() {
+        let opcode = generate_memory_move_destination_opcode(
+            Register::A0,
+            Register::D1,
+            0,
+            OpcodeSize::Byte,
+        );
+        let mut cpu = Cpu::new();
+        cpu.registers.registers[1] = 0xDEADBEEF;
+        cpu.registers.registers[16] = 0x05403502;
+        let opcode = cpu.decoder(opcode);
+        cpu.execute(opcode);
+
+        assert_eq!(
+            cpu.memory.memory_bus_read(&OpcodeSize::Byte, 0x05403502),
+            0x000000EF
+        );
+    }
+
+    #[test]
+    fn test_move_word_register_into_memory_execution() {
+        let opcode = generate_memory_move_destination_opcode(
+            Register::A0,
+            Register::D1,
+            0,
+            OpcodeSize::Word,
+        );
+        let mut cpu = Cpu::new();
+        cpu.registers.registers[1] = 0xDEADBEEF;
+        cpu.registers.registers[16] = 0x05403502;
+        let opcode = cpu.decoder(opcode);
+        cpu.execute(opcode);
+
+        assert_eq!(
+            cpu.memory.memory_bus_read(&OpcodeSize::Word, 0x05403502),
+            0x0000BEEF
+        );
+    }
+
+    #[test]
+    fn test_move_dword_register_into_memory_execution() {
+        let opcode = generate_memory_move_destination_opcode(
+            Register::A0,
+            Register::D1,
+            0,
+            OpcodeSize::Dword,
+        );
+        let mut cpu = Cpu::new();
+        cpu.registers.registers[1] = 0xDEADBEEF;
+        cpu.registers.registers[16] = 0x05403502;
+        let opcode = cpu.decoder(opcode);
+        cpu.execute(opcode);
+
+        assert_eq!(
+            cpu.memory.memory_bus_read(&OpcodeSize::Dword, 0x05403502),
+            0xDEADBEEF
+        );
+    }
+
+    #[test]
     fn test_move_memory_to_dword_registers() {
         //TODO(Kay): Add the rest of the registers as well!
         for address_register in &ADDRESS_REGISTERS {
-            let opcode =
-                generate_memory_move_opcode(Register::D0, *address_register, 0, OpcodeSize::Dword);
+            let opcode = generate_memory_move_source_opcode(
+                Register::D0,
+                *address_register,
+                0,
+                OpcodeSize::Dword,
+            );
             let result = get_decoder_result(opcode);
             let expected =
                 simple_memory_move_expect(Register::D0, *address_register, OpcodeSize::Dword);
