@@ -2,6 +2,7 @@ use super::addressing_modes::AddressingMode;
 use super::decoder::BitPattern;
 use super::opcode::MoveOpcode;
 use super::opcode::Opcode;
+use crate::cpu::opcode::Execute;
 use crate::Memory;
 use crate::RegisterFile;
 
@@ -28,98 +29,12 @@ impl Cpu {
     }
 
     //TODO(Kay): Refactor to the Opcode enum!
-    pub fn execute(&mut self, opcode: Opcode) {
-        match opcode {
+    pub fn execution_stage(&mut self, opcode: Opcode) {
+        opcode.execute(&mut self.registers, &mut self.memory);
+        /*match opcode {
             Opcode::Move(decoded_data) => self.execute_move(&decoded_data),
             Opcode::Unknown => todo!(),
-        }
-    }
-
-    //TODO(Kay): refactor this into the Moveopcode struct!
-    pub fn execute_move(&mut self, arguments: &MoveOpcode) {
-        match arguments {
-            MoveOpcode {
-                addr_mode: AddressingMode::Atomic,
-                destination,
-                source,
-                offset,
-                size,
-            } => {
-                //TODO(Kay): Figure out if these should affect any flags, in most ISAs i know these
-                //           do __not__ affect the flags in any way or form!
-                let destination = *destination;
-                let source = *source;
-                let dest_index: u32 = destination.into();
-                let source_index: u32 = source.into();
-                let data_to_write =
-                    size.retrieve_data(self.registers.registers[source_index as usize]);
-
-                self.registers.registers[dest_index as usize] = data_to_write;
-            }
-            MoveOpcode {
-                addr_mode: AddressingMode::Memory,
-                destination,
-                source,
-                offset,
-                size,
-            } => {
-                let destination = *destination;
-                let source = *source;
-                let dest_index: u32 = destination.into();
-                let source_index: u32 = source.into();
-
-                if source_index >= 0x10 && dest_index >= 0x10 {
-                    unreachable!(
-                        "illegal move instruction with two memory operands reached execution stage"
-                    )
-                }
-
-                if source_index >= 0x10 {
-                    let data_to_write = size.retrieve_data(
-                        self.memory
-                            .memory_bus_read(size, self.registers.registers[source_index as usize]),
-                    );
-
-                    self.registers.registers[dest_index as usize] = data_to_write;
-                } else if dest_index >= 0x10 {
-                    let target_address = self.registers.registers[dest_index as usize];
-                    let data_to_write =
-                        size.retrieve_data(self.registers.registers[source_index as usize]);
-                    let command = size.memory_write_command(target_address, data_to_write);
-
-                    self.memory.memory_bus_write(command);
-                } else {
-                    unreachable!("illegal move memory instruction with two data registers reached execution stage")
-                }
-            }
-            MoveOpcode {
-                addr_mode: AddressingMode::MemoryInc,
-                destination,
-                source,
-                offset,
-                size,
-            } => {
-                let destination = *destination;
-                let source = *source;
-                let dest_index: u32 = destination.into();
-                let source_index: u32 = source.into();
-
-                let data_to_write = size.retrieve_data(
-                    self.memory
-                        .memory_bus_read(size, self.registers.registers[source_index as usize]),
-                );
-
-                self.registers.registers[dest_index as usize] = data_to_write;
-                self.registers.registers[source_index as usize] += 1;
-            }
-            MoveOpcode {
-                addr_mode: AddressingMode::MemoryDec,
-                destination,
-                source,
-                offset,
-                size,
-            } => todo!(),
-        }
+        }*/
     }
 }
 
@@ -318,7 +233,7 @@ mod test {
         cpu.memory.bytes[0x7000BA6] = 0xBB;
         cpu.memory.bytes[0x7000BA7] = 0xCC;
         cpu.memory.bytes[0x7000BA8] = 0xDD;
-        cpu.execute(opcode);
+        cpu.execution_stage(opcode);
 
         assert_eq!(cpu.registers.registers[0], 0xAABBCCDD);
     }
@@ -336,7 +251,7 @@ mod test {
         cpu.memory.bytes[0x7000BA6] = 0xBB;
         cpu.memory.bytes[0x7000BA7] = 0xCC;
         cpu.memory.bytes[0x7000BA8] = 0xDD;
-        cpu.execute(opcode);
+        cpu.execution_stage(opcode);
 
         assert_eq!(cpu.registers.registers[0], 0x0000AABB);
     }
@@ -354,7 +269,7 @@ mod test {
         cpu.memory.bytes[0x7000BA6] = 0xBB;
         cpu.memory.bytes[0x7000BA7] = 0xCC;
         cpu.memory.bytes[0x7000BA8] = 0xDD;
-        cpu.execute(opcode);
+        cpu.execution_stage(opcode);
 
         assert_eq!(cpu.registers.registers[0], 0x000000AA);
     }
@@ -365,7 +280,7 @@ mod test {
         let mut cpu = Cpu::new();
         cpu.registers.registers[5] = 0xAABBCCDD;
         let opcode = cpu.decoder(opcode);
-        cpu.execute(opcode);
+        cpu.execution_stage(opcode);
 
         assert_eq!(cpu.registers.registers[0], cpu.registers.registers[5]);
     }
@@ -376,7 +291,7 @@ mod test {
         let mut cpu = Cpu::new();
         cpu.registers.registers[3] = 0xAABBCCDD;
         let opcode = cpu.decoder(opcode);
-        cpu.execute(opcode);
+        cpu.execution_stage(opcode);
 
         assert_eq!(cpu.registers.registers[1], 0x0000CCDD);
     }
@@ -387,7 +302,7 @@ mod test {
         let mut cpu = Cpu::new();
         cpu.registers.registers[15] = 0xAABBCCDD;
         let opcode = cpu.decoder(opcode);
-        cpu.execute(opcode);
+        cpu.execution_stage(opcode);
 
         assert_eq!(cpu.registers.registers[2], 0x000000DD);
     }
@@ -404,7 +319,7 @@ mod test {
         cpu.registers.registers[1] = 0xDEADBEEF;
         cpu.registers.registers[16] = 0x05403502;
         let opcode = cpu.decoder(opcode);
-        cpu.execute(opcode);
+        cpu.execution_stage(opcode);
 
         assert_eq!(
             cpu.memory.memory_bus_read(&OpcodeSize::Byte, 0x05403502),
@@ -424,7 +339,7 @@ mod test {
         cpu.registers.registers[1] = 0xDEADBEEF;
         cpu.registers.registers[16] = 0x05403502;
         let opcode = cpu.decoder(opcode);
-        cpu.execute(opcode);
+        cpu.execution_stage(opcode);
 
         assert_eq!(
             cpu.memory.memory_bus_read(&OpcodeSize::Word, 0x05403502),
@@ -444,7 +359,7 @@ mod test {
         cpu.registers.registers[1] = 0xDEADBEEF;
         cpu.registers.registers[16] = 0x05403502;
         let opcode = cpu.decoder(opcode);
-        cpu.execute(opcode);
+        cpu.execution_stage(opcode);
 
         assert_eq!(
             cpu.memory.memory_bus_read(&OpcodeSize::Dword, 0x05403502),
