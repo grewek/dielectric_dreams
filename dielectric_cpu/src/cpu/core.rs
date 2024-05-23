@@ -31,10 +31,6 @@ impl Cpu {
     //TODO(Kay): Refactor to the Opcode enum!
     pub fn execution_stage(&mut self, opcode: Opcode) {
         opcode.execute(&mut self.registers, &mut self.memory);
-        /*match opcode {
-            Opcode::Move(decoded_data) => self.execute_move(&decoded_data),
-            Opcode::Unknown => todo!(),
-        }*/
     }
 }
 
