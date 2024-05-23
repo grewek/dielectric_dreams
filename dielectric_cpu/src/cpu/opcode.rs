@@ -1,8 +1,5 @@
-use std::fmt::Display;
-
-use crate::{Memory, RegisterFile};
-
 use super::{addressing_modes::AddressingMode, opcode_size::OpcodeSize, register::Register};
+use crate::{Memory, RegisterFile};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
