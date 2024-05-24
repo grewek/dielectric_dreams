@@ -49,6 +49,14 @@ impl OpcodeSize {
         }
     }
 
+    pub fn size_in_bytes(&self) -> u32 {
+        match self {
+            OpcodeSize::Byte => 1,
+            OpcodeSize::Word => 2,
+            OpcodeSize::Dword => 4,
+        }
+    }
+
     pub(crate) fn memory_write_command(&self, address: u32, value: u32) -> MemoryWrite {
         match self {
             OpcodeSize::Byte => MemoryWrite::Byte {
