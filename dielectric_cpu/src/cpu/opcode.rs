@@ -114,7 +114,7 @@ impl Execute for MoveOpcode {
 
                     let command = size.memory_write_command(target_address, data_to_write);
                     memory.memory_bus_write(command);
-                    register_file.registers[dest_index as usize] += 1;
+                    register_file.registers[dest_index as usize] += size.size_in_bytes();
                 }
             }
             MoveOpcode {
