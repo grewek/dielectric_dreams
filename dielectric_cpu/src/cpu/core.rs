@@ -201,6 +201,26 @@ mod test {
         result
     }
 
+    fn generate_memory_move_inc_source_opcode(
+        dest: Register,
+        src: Register,
+        offset: u32,
+        size: OpcodeSize,
+    ) -> u32 {
+        let increment_mode = 0x01;
+        let size: u32 = size.into();
+        let src: u32 = generate_memory_source(src);
+        let dest: u32 = dest.into();
+        let result = (increment_mode << 30)
+            | (size << 28)
+            | (offset << 22)
+            | (src << 16)
+            | (dest << 10)
+            | 0x01;
+        dbg!(result);
+        result
+    }
+
     //NOTE: This test covers all __possible__ combinations of 32bit registers!
     //      there shouldn't be any cases that contain undefined behaviour
     #[test]
@@ -361,6 +381,21 @@ mod test {
             cpu.memory.memory_bus_read(&OpcodeSize::Dword, 0x05403502),
             0xDEADBEEF
         );
+    }
+
+    #[test]
+    fn test_move_byte_inc_register_into_memory_execution() {
+        let opcode =
+            generate_memory_move_inc_source_opcode(Register::D1, Register::A0, 0, OpcodeSize::Byte);
+        let mut cpu = Cpu::new();
+
+        cpu.memory.write_byte(0x05403502, 0xEF);
+        cpu.registers.registers[16] = 0x05403502;
+        let opcode = cpu.decoder(opcode);
+        cpu.execution_stage(opcode);
+
+        assert_eq!(cpu.registers.registers[1], 0x000000EF);
+        assert_eq!(cpu.registers.registers[16], 0x05403503)
     }
 
     #[test]
