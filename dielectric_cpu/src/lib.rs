@@ -1,9 +1,14 @@
 pub mod cpu;
 
-use cpu::{core, opcode_size::OpcodeSize};
+use cpu::opcode_size::OpcodeSize;
 
 const MEMORY_SIZE: usize = 128 * (1024 * 1024);
 
+enum MemoryRead {
+    Byte { address: u32 },
+    Word { address: u32 },
+    Dword { address: u32 },
+}
 enum MemoryWrite {
     Byte { address: u32, value: u8 },
     Word { address: u32, value: u16 },
