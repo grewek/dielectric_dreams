@@ -5,16 +5,23 @@ use crate::Memory;
 use crate::RegisterFile;
 
 pub struct Cpu {
-    registers: RegisterFile,
+    register_file: RegisterFile,
     status_register: u32,
     ip: u32,
     memory: Memory,
 }
 
+//NOTE(Kay): Make clippy happy!
+impl Default for Cpu {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Cpu {
     pub fn new() -> Self {
         Self {
-            registers: RegisterFile::new(),
+            register_file: RegisterFile::new(),
             memory: Memory::new(),
             status_register: 0,
             ip: 0,
@@ -28,7 +35,7 @@ impl Cpu {
 
     //TODO(Kay): Refactor to the Opcode enum!
     pub fn execution_stage(&mut self, opcode: Opcode) {
-        opcode.execute(&mut self.registers, &mut self.memory);
+        opcode.execute(&mut self.register_file, &mut self.memory);
     }
 }
 
@@ -240,7 +247,7 @@ mod test {
             generate_memory_move_source_opcode(Register::D0, Register::A0, 0, OpcodeSize::Dword);
 
         let mut cpu = Cpu::new();
-        cpu.registers.registers[16] = 0x7000BA5;
+        cpu.register_file.registers[16] = 0x7000BA5;
         let opcode = cpu.decoder(opcode);
 
         cpu.memory.bytes[0x7000BA5] = 0xAA;
@@ -249,7 +256,7 @@ mod test {
         cpu.memory.bytes[0x7000BA8] = 0xDD;
         cpu.execution_stage(opcode);
 
-        assert_eq!(cpu.registers.registers[0], 0xAABBCCDD);
+        assert_eq!(cpu.register_file.registers[0], 0xAABBCCDD);
     }
 
     #[test]
@@ -258,7 +265,7 @@ mod test {
             generate_memory_move_source_opcode(Register::D0, Register::A0, 0, OpcodeSize::Word);
 
         let mut cpu = Cpu::new();
-        cpu.registers.registers[16] = 0x7000BA5;
+        cpu.register_file.registers[16] = 0x7000BA5;
         let opcode = cpu.decoder(opcode);
 
         cpu.memory.bytes[0x7000BA5] = 0xAA;
@@ -267,7 +274,7 @@ mod test {
         cpu.memory.bytes[0x7000BA8] = 0xDD;
         cpu.execution_stage(opcode);
 
-        assert_eq!(cpu.registers.registers[0], 0x0000AABB);
+        assert_eq!(cpu.register_file.registers[0], 0x0000AABB);
     }
 
     #[test]
@@ -276,7 +283,7 @@ mod test {
             generate_memory_move_source_opcode(Register::D0, Register::A0, 0, OpcodeSize::Byte);
 
         let mut cpu = Cpu::new();
-        cpu.registers.registers[16] = 0x7000BA5;
+        cpu.register_file.registers[16] = 0x7000BA5;
         let opcode = cpu.decoder(opcode);
 
         cpu.memory.bytes[0x7000BA5] = 0xAA;
@@ -285,40 +292,43 @@ mod test {
         cpu.memory.bytes[0x7000BA8] = 0xDD;
         cpu.execution_stage(opcode);
 
-        assert_eq!(cpu.registers.registers[0], 0x000000AA);
+        assert_eq!(cpu.register_file.registers[0], 0x000000AA);
     }
 
     #[test]
     fn test_move_dword_registers_execution() {
         let opcode = generate_opcode(Register::D0, Register::D5, 0, OpcodeSize::Dword);
         let mut cpu = Cpu::new();
-        cpu.registers.registers[5] = 0xAABBCCDD;
+        cpu.register_file.registers[5] = 0xAABBCCDD;
         let opcode = cpu.decoder(opcode);
         cpu.execution_stage(opcode);
 
-        assert_eq!(cpu.registers.registers[0], cpu.registers.registers[5]);
+        assert_eq!(
+            cpu.register_file.registers[0],
+            cpu.register_file.registers[5]
+        );
     }
 
     #[test]
     fn test_move_word_registers_execution() {
         let opcode = generate_opcode(Register::D1, Register::D3, 0, OpcodeSize::Word);
         let mut cpu = Cpu::new();
-        cpu.registers.registers[3] = 0xAABBCCDD;
+        cpu.register_file.registers[3] = 0xAABBCCDD;
         let opcode = cpu.decoder(opcode);
         cpu.execution_stage(opcode);
 
-        assert_eq!(cpu.registers.registers[1], 0x0000CCDD);
+        assert_eq!(cpu.register_file.registers[1], 0x0000CCDD);
     }
 
     #[test]
     fn test_move_byte_registers_execution() {
         let opcode = generate_opcode(Register::D2, Register::D15, 0, OpcodeSize::Byte);
         let mut cpu = Cpu::new();
-        cpu.registers.registers[15] = 0xAABBCCDD;
+        cpu.register_file.registers[15] = 0xAABBCCDD;
         let opcode = cpu.decoder(opcode);
         cpu.execution_stage(opcode);
 
-        assert_eq!(cpu.registers.registers[2], 0x000000DD);
+        assert_eq!(cpu.register_file.registers[2], 0x000000DD);
     }
 
     #[test]
@@ -330,8 +340,8 @@ mod test {
             OpcodeSize::Byte,
         );
         let mut cpu = Cpu::new();
-        cpu.registers.registers[1] = 0xDEADBEEF;
-        cpu.registers.registers[16] = 0x05403502;
+        cpu.register_file.registers[1] = 0xDEADBEEF;
+        cpu.register_file.registers[16] = 0x05403502;
         let opcode = cpu.decoder(opcode);
         cpu.execution_stage(opcode);
 
@@ -350,8 +360,8 @@ mod test {
             OpcodeSize::Word,
         );
         let mut cpu = Cpu::new();
-        cpu.registers.registers[1] = 0xDEADBEEF;
-        cpu.registers.registers[16] = 0x05403502;
+        cpu.register_file.registers[1] = 0xDEADBEEF;
+        cpu.register_file.registers[16] = 0x05403502;
         let opcode = cpu.decoder(opcode);
         cpu.execution_stage(opcode);
 
@@ -370,8 +380,8 @@ mod test {
             OpcodeSize::Dword,
         );
         let mut cpu = Cpu::new();
-        cpu.registers.registers[1] = 0xDEADBEEF;
-        cpu.registers.registers[16] = 0x05403502;
+        cpu.register_file.registers[1] = 0xDEADBEEF;
+        cpu.register_file.registers[16] = 0x05403502;
         let opcode = cpu.decoder(opcode);
         cpu.execution_stage(opcode);
 
@@ -388,12 +398,12 @@ mod test {
         let mut cpu = Cpu::new();
 
         cpu.memory.write_byte(0x05403502, 0xEF);
-        cpu.registers.registers[16] = 0x05403502;
+        cpu.register_file.registers[16] = 0x05403502;
         let opcode = cpu.decoder(opcode);
         cpu.execution_stage(opcode);
 
-        assert_eq!(cpu.registers.registers[1], 0x000000EF);
-        assert_eq!(cpu.registers.registers[16], 0x05403503)
+        assert_eq!(cpu.register_file.registers[1], 0x000000EF);
+        assert_eq!(cpu.register_file.registers[16], 0x05403503)
     }
 
     #[test]
@@ -403,12 +413,12 @@ mod test {
         let mut cpu = Cpu::new();
 
         cpu.memory.write_word(0x05403502, 0xBEEF);
-        cpu.registers.registers[16] = 0x05403502;
+        cpu.register_file.registers[16] = 0x05403502;
         let opcode = cpu.decoder(opcode);
         cpu.execution_stage(opcode);
 
-        assert_eq!(cpu.registers.registers[1], 0x0000BEEF);
-        assert_eq!(cpu.registers.registers[16], 0x05403504)
+        assert_eq!(cpu.register_file.registers[1], 0x0000BEEF);
+        assert_eq!(cpu.register_file.registers[16], 0x05403504)
     }
 
     #[test]
@@ -422,12 +432,12 @@ mod test {
         let mut cpu = Cpu::new();
 
         cpu.memory.write_dword(0x05403502, 0xDEADBEEF);
-        cpu.registers.registers[16] = 0x05403502;
+        cpu.register_file.registers[16] = 0x05403502;
         let opcode = cpu.decoder(opcode);
         cpu.execution_stage(opcode);
 
-        assert_eq!(cpu.registers.registers[1], 0xDEADBEEF);
-        assert_eq!(cpu.registers.registers[16], 0x05403506)
+        assert_eq!(cpu.register_file.registers[1], 0xDEADBEEF);
+        assert_eq!(cpu.register_file.registers[16], 0x05403506)
     }
 
     #[test]
