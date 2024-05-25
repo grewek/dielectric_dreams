@@ -1,6 +1,4 @@
-use super::addressing_modes::AddressingMode;
 use super::decoder::BitPattern;
-use super::opcode::MoveOpcode;
 use super::opcode::Opcode;
 use crate::cpu::opcode::Execute;
 use crate::Memory;
@@ -396,6 +394,40 @@ mod test {
 
         assert_eq!(cpu.registers.registers[1], 0x000000EF);
         assert_eq!(cpu.registers.registers[16], 0x05403503)
+    }
+
+    #[test]
+    fn test_move_word_inc_register_into_memory_execution() {
+        let opcode =
+            generate_memory_move_inc_source_opcode(Register::D1, Register::A0, 0, OpcodeSize::Word);
+        let mut cpu = Cpu::new();
+
+        cpu.memory.write_word(0x05403502, 0xBEEF);
+        cpu.registers.registers[16] = 0x05403502;
+        let opcode = cpu.decoder(opcode);
+        cpu.execution_stage(opcode);
+
+        assert_eq!(cpu.registers.registers[1], 0x0000BEEF);
+        assert_eq!(cpu.registers.registers[16], 0x05403504)
+    }
+
+    #[test]
+    fn test_move_dword_inc_register_into_memory_execution() {
+        let opcode = generate_memory_move_inc_source_opcode(
+            Register::D1,
+            Register::A0,
+            0,
+            OpcodeSize::Dword,
+        );
+        let mut cpu = Cpu::new();
+
+        cpu.memory.write_dword(0x05403502, 0xDEADBEEF);
+        cpu.registers.registers[16] = 0x05403502;
+        let opcode = cpu.decoder(opcode);
+        cpu.execution_stage(opcode);
+
+        assert_eq!(cpu.registers.registers[1], 0xDEADBEEF);
+        assert_eq!(cpu.registers.registers[16], 0x05403506)
     }
 
     #[test]
