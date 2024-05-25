@@ -123,7 +123,33 @@ impl Execute for MoveOpcode {
                 source,
                 offset,
                 size,
-            } => todo!(),
+            } => {
+                let destination = *destination;
+                let source = *source;
+                let dest_index: u32 = destination.into();
+                let source_index: u32 = source.into();
+
+                if source_index >= 0x10 && dest_index >= 0x10 {
+                    unreachable!("illegal move inc memory operation with two memory operands!")
+                }
+
+                if source_index >= 0x10 {
+                    let data_to_write = size.retrieve_data(
+                        memory
+                            .memory_bus_read(size, register_file.registers[source_index as usize]),
+                    );
+                    register_file.registers[dest_index as usize] = data_to_write;
+                    register_file.registers[source_index as usize] -= size.size_in_bytes();
+                } else if dest_index >= 0x10 {
+                    let target_address = register_file.registers[dest_index as usize];
+                    let data_to_write =
+                        size.retrieve_data(register_file.registers[source_index as usize]);
+
+                    let command = size.memory_write_command(target_address, data_to_write);
+                    memory.memory_bus_write(command);
+                    register_file.registers[dest_index as usize] -= size.size_in_bytes();
+                }
+            }
         }
     }
 }
