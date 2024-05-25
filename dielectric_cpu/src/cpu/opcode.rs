@@ -106,7 +106,7 @@ impl Execute for MoveOpcode {
                     );
 
                     register_file.registers[dest_index as usize] = data_to_write;
-                    register_file.registers[source_index as usize] += 1;
+                    register_file.registers[source_index as usize] += size.size_in_bytes();
                 } else if dest_index >= 0x10 {
                     let target_address = register_file.registers[dest_index as usize];
                     let data_to_write =
