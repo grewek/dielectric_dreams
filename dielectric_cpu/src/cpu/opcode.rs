@@ -20,7 +20,9 @@ impl Execute for Opcode {
 #[derive(Debug, PartialEq, Eq)]
 pub struct MoveOpcode {
     pub addr_mode: AddressingMode,
+    pub dest_mem: bool,
     pub destination: Register,
+    pub src_mem: bool,
     pub source: Register,
     pub offset: u32,
     pub size: OpcodeSize,
@@ -31,7 +33,9 @@ impl Execute for MoveOpcode {
         match self {
             MoveOpcode {
                 addr_mode: AddressingMode::Atomic,
+                dest_mem,
                 destination,
+                src_mem,
                 source,
                 offset,
                 size,
@@ -49,7 +53,9 @@ impl Execute for MoveOpcode {
             }
             MoveOpcode {
                 addr_mode: AddressingMode::Memory,
+                dest_mem,
                 destination,
+                src_mem,
                 source,
                 offset,
                 size,
@@ -85,7 +91,9 @@ impl Execute for MoveOpcode {
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemoryInc,
+                dest_mem,
                 destination,
+                src_mem,
                 source,
                 offset,
                 size,
@@ -119,7 +127,9 @@ impl Execute for MoveOpcode {
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemoryDec,
+                dest_mem,
                 destination,
+                src_mem,
                 source,
                 offset,
                 size,

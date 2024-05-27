@@ -127,9 +127,17 @@ mod test {
     }
 
     fn simple_move_expect(dest: Register, src: Register, size: OpcodeSize) -> Opcode {
+        let dest_reg: u32 = dest.into();
+        let src_reg: u32 = dest.into();
+
+        let dest_mem = (dest_reg >> 5) == 0x01;
+        let src_mem = (src_reg >> 5) == 0x01;
+
         Opcode::Move(MoveOpcode {
             addr_mode: AddressingMode::Atomic,
+            dest_mem,
             destination: dest,
+            src_mem,
             source: src,
             offset: 0,
             size,
@@ -137,9 +145,17 @@ mod test {
     }
 
     fn simple_memory_move_expect(dest: Register, src: Register, size: OpcodeSize) -> Opcode {
+        let dest_reg: u32 = dest.into();
+        let src_reg: u32 = dest.into();
+
+        let dest_mem = (dest_reg >> 4) == 0x01;
+        let src_mem = (src_reg >> 4) == 0x01;
+
         Opcode::Move(MoveOpcode {
             addr_mode: AddressingMode::Memory,
+            dest_mem,
             destination: dest,
+            src_mem,
             source: src,
             offset: 0,
             size,
@@ -173,8 +189,16 @@ mod test {
     fn generate_opcode(dest: Register, src: Register, offset: u32, size: OpcodeSize) -> u32 {
         let size: u32 = size.into();
         let src: u32 = src.into();
+        let src_mem = src >> 5;
+        let dest_mem = src >> 5;
         let dest: u32 = dest.into();
-        let result = (size << 28) | (offset << 22) | (src << 16) | (dest << 10) | 0x01;
+        let result = (size << 28)
+            | (offset << 22)
+            | (src_mem << 21)
+            | (src << 16)
+            | (dest_mem << 15)
+            | (dest << 10)
+            | 0x01;
         dbg!(result);
         result
     }

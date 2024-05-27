@@ -23,7 +23,9 @@ const DECODER_INCREMENT_MASK: u32 = 0x03;
 pub struct BitPattern {
     pattern: u32,
     opcode: u32,
+    dest_mem_mod: bool,
     dest_reg: u32,
+    src_mem_mod: bool,
     src_reg: u32,
     offset: u32,
     size: u32,
@@ -33,12 +35,18 @@ pub struct BitPattern {
 
 impl BitPattern {
     pub fn new(pattern: u32) -> Self {
+        let dest_reg =
+            (pattern >> DECODER_DESTINATION_REGISTER_START) & DECODER_DESTINATION_REGISTER_MASK;
+        let dest_mem_mod = (dest_reg >> 4) == 0x01;
+        let src_reg = (pattern >> DECODER_SOURCE_REGISTER_START) & DECODER_SOURCE_REGISTER_MASK;
+        let src_mem_mod = (src_reg >> 4) == 0x01;
         Self {
             pattern,
             opcode: pattern & DECODER_OPCODE_MASK,
-            dest_reg: (pattern >> DECODER_DESTINATION_REGISTER_START)
-                & DECODER_DESTINATION_REGISTER_MASK,
-            src_reg: (pattern >> DECODER_SOURCE_REGISTER_START) & DECODER_SOURCE_REGISTER_MASK,
+            dest_mem_mod,
+            dest_reg,
+            src_mem_mod,
+            src_reg,
             offset: (pattern >> DECODER_OFFSET_START) & DECODER_OFFSET_MASK,
             size: (pattern >> DECODER_SIZE_START) & DECODER_SIZE_MASK,
             increment: (pattern >> DECODER_INCREMENT_START) & DECODER_INCREMENT_MASK,
@@ -77,7 +85,9 @@ impl From<BitPattern> for Opcode {
         match value.opcode {
             0x01 => Opcode::Move(MoveOpcode {
                 addr_mode: addressing_mode(value.increment, best_fit),
+                dest_mem: addr_mode_dest == 0x01,
                 destination: Register::new(value.dest_reg),
+                src_mem: addr_mode_src == 0x01,
                 source: Register::new(value.src_reg),
                 offset: value.offset,
                 size: OpcodeSize::new(value.size),
