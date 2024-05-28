@@ -148,8 +148,8 @@ mod test {
         let dest_reg: u32 = dest.into();
         let src_reg: u32 = dest.into();
 
-        let dest_mem = (dest_reg >> 4) == 0x01;
-        let src_mem = (src_reg >> 4) == 0x01;
+        let dest_mem = (dest_reg >> 5) == 0x01;
+        let src_mem = (src_reg >> 5) == 0x01;
 
         Opcode::Move(MoveOpcode {
             addr_mode: AddressingMode::Memory,
@@ -186,21 +186,35 @@ mod test {
         (1 << 5) | src_pattern
     }
 
-    fn generate_opcode(dest: Register, src: Register, offset: u32, size: OpcodeSize) -> u32 {
+    fn generate_opcode(
+        dest_src_mod: bool,
+        dest: Register,
+        mem_src_mod: bool,
+        src: Register,
+        offset: u32,
+        size: OpcodeSize,
+    ) -> u32 {
         let size: u32 = size.into();
+
         let src: u32 = src.into();
-        let src_mem = src >> 5;
-        let dest_mem = src >> 5;
+        let src_mem = if mem_src_mod { 0x01 } else { 0x00 };
+        let src = (src_mem << 5) | src;
+
         let dest: u32 = dest.into();
-        let result = (size << 28)
-            | (offset << 22)
-            | (src_mem << 21)
-            | (src << 16)
-            | (dest_mem << 15)
-            | (dest << 10)
-            | 0x01;
+        let dest_mem = if dest_src_mod { 0x01 } else { 0x00 };
+        let dest = (dest_mem << 5) | dest;
+
+        let result = (size << 28) | (offset << 22) | (src << 16) | (dest << 10) | 0x01;
         dbg!(result);
         result
+    }
+
+    fn make_memory_modification(mem_mod: bool, reg: Register) -> u32 {
+        let reg: u32 = reg.into();
+        let m_mod = if mem_mod { 0x01 } else { 0x00 };
+        let reg = (m_mod << 5) | reg;
+
+        reg
     }
 
     fn generate_memory_move_destination_opcode(
@@ -212,6 +226,7 @@ mod test {
         let size: u32 = size.into();
         let src: u32 = src.into();
         let dest: u32 = generate_memory_source(dest);
+        //let dest = make_memory_modification(true, dest);
         let result = (size << 28) | (offset << 22) | (src << 16) | (dest << 10) | 0x01;
         dbg!(result);
         result
@@ -256,7 +271,7 @@ mod test {
     fn test_move_dword_registers() {
         for dest in &ALL_REGISTERS {
             for src in &ALL_REGISTERS {
-                let opcode = generate_opcode(*dest, *src, 0, OpcodeSize::Dword);
+                let opcode = generate_opcode(false, *dest, false, *src, 0, OpcodeSize::Dword);
 
                 let result = get_decoder_result(opcode);
                 let expected = simple_move_expect(*dest, *src, OpcodeSize::Dword);
@@ -321,7 +336,14 @@ mod test {
 
     #[test]
     fn test_move_dword_registers_execution() {
-        let opcode = generate_opcode(Register::D0, Register::D5, 0, OpcodeSize::Dword);
+        let opcode = generate_opcode(
+            false,
+            Register::D0,
+            false,
+            Register::D5,
+            0,
+            OpcodeSize::Dword,
+        );
         let mut cpu = Cpu::new();
         cpu.register_file.registers[5] = 0xAABBCCDD;
         let opcode = cpu.decoder(opcode);
@@ -335,7 +357,14 @@ mod test {
 
     #[test]
     fn test_move_word_registers_execution() {
-        let opcode = generate_opcode(Register::D1, Register::D3, 0, OpcodeSize::Word);
+        let opcode = generate_opcode(
+            false,
+            Register::D1,
+            false,
+            Register::D3,
+            0,
+            OpcodeSize::Word,
+        );
         let mut cpu = Cpu::new();
         cpu.register_file.registers[3] = 0xAABBCCDD;
         let opcode = cpu.decoder(opcode);
@@ -346,7 +375,14 @@ mod test {
 
     #[test]
     fn test_move_byte_registers_execution() {
-        let opcode = generate_opcode(Register::D2, Register::D15, 0, OpcodeSize::Byte);
+        let opcode = generate_opcode(
+            false,
+            Register::D2,
+            false,
+            Register::D15,
+            0,
+            OpcodeSize::Byte,
+        );
         let mut cpu = Cpu::new();
         cpu.register_file.registers[15] = 0xAABBCCDD;
         let opcode = cpu.decoder(opcode);

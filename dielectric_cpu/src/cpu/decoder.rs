@@ -74,8 +74,8 @@ impl LowerHex for BitPattern {
 
 impl From<BitPattern> for Opcode {
     fn from(value: BitPattern) -> Self {
-        let addr_mode_dest = value.dest_reg >> 4;
-        let addr_mode_src = value.src_reg >> 4;
+        let addr_mode_dest = value.dest_reg >> 5;
+        let addr_mode_src = value.src_reg >> 5;
 
         //TODO(Kay): Rethink the ISA, doing it like this is probably a bad idea! Also we loose the
         //           we can determine the move type by looking at the used registers and determine

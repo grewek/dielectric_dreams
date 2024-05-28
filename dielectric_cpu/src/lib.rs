@@ -9,6 +9,7 @@ enum MemoryRead {
     Word { address: u32 },
     Dword { address: u32 },
 }
+
 enum MemoryWrite {
     Byte { address: u32, value: u8 },
     Word { address: u32, value: u16 },
