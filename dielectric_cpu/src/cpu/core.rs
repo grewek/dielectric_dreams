@@ -144,12 +144,18 @@ mod test {
         })
     }
 
-    fn simple_memory_move_expect(dest: Register, src: Register, size: OpcodeSize) -> Opcode {
+    fn simple_memory_move_expect(
+        dest_mem: bool,
+        dest: Register,
+        src_mem: bool,
+        src: Register,
+        size: OpcodeSize,
+    ) -> Opcode {
         let dest_reg: u32 = dest.into();
         let src_reg: u32 = dest.into();
 
-        let dest_mem = (dest_reg >> 5) == 0x01;
-        let src_mem = (src_reg >> 5) == 0x01;
+        //let dest_mem = (dest_reg >> 5) == 0x01;
+        //let src_mem = (src_reg >> 5) == 0x01;
 
         Opcode::Move(MoveOpcode {
             addr_mode: AddressingMode::Memory,
@@ -504,15 +510,22 @@ mod test {
     fn test_move_memory_to_dword_registers() {
         //TODO(Kay): Add the rest of the registers as well!
         for address_register in &ADDRESS_REGISTERS {
-            let opcode = generate_memory_move_source_opcode(
+            let opcode = generate_opcode(
+                false,
                 Register::D0,
+                true,
                 *address_register,
                 0,
                 OpcodeSize::Dword,
             );
             let result = get_decoder_result(opcode);
-            let expected =
-                simple_memory_move_expect(Register::D0, *address_register, OpcodeSize::Dword);
+            let expected = simple_memory_move_expect(
+                false,
+                Register::D0,
+                true,
+                *address_register,
+                OpcodeSize::Dword,
+            );
             assert_eq!(result, expected, "Failed {:?}, {:?}", result, expected);
         }
     }

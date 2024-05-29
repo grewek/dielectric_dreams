@@ -37,9 +37,9 @@ impl BitPattern {
     pub fn new(pattern: u32) -> Self {
         let dest_reg =
             (pattern >> DECODER_DESTINATION_REGISTER_START) & DECODER_DESTINATION_REGISTER_MASK;
-        let dest_mem_mod = (dest_reg >> 4) == 0x01;
+        let dest_mem_mod = (dest_reg >> 5) == 0x01;
         let src_reg = (pattern >> DECODER_SOURCE_REGISTER_START) & DECODER_SOURCE_REGISTER_MASK;
-        let src_mem_mod = (src_reg >> 4) == 0x01;
+        let src_mem_mod = (src_reg >> 5) == 0x01;
         Self {
             pattern,
             opcode: pattern & DECODER_OPCODE_MASK,
@@ -84,7 +84,7 @@ impl From<BitPattern> for Opcode {
 
         match value.opcode {
             0x01 => Opcode::Move(MoveOpcode {
-                addr_mode: addressing_mode(value.increment, best_fit),
+                addr_mode: addressing_mode(value.increment, value.src_mem_mod, value.dest_mem_mod),
                 dest_mem: addr_mode_dest == 0x01,
                 destination: Register::new(value.dest_reg),
                 src_mem: addr_mode_src == 0x01,
@@ -98,17 +98,19 @@ impl From<BitPattern> for Opcode {
     }
 }
 
-pub fn addressing_mode(increment_mode: u32, register: u32) -> AddressingMode {
-    let addr_mode_bits = register;
-
+pub fn addressing_mode(increment_mode: u32, reg_m_src: bool, reg_m_dest: bool) -> AddressingMode {
     let increment = increment_mode & 0x01 == 0x01;
     let decrement = increment_mode & 0x02 == 0x02;
 
-    match addr_mode_bits {
-        0x00..=0x02 => AddressingMode::Atomic,
-        0x03 if increment => AddressingMode::MemoryInc,
-        0x03 if decrement => AddressingMode::MemoryDec,
-        0x03 => AddressingMode::Memory,
+    match (reg_m_dest, reg_m_src) {
+        //Yeah that's not making anything better at all...
+        (false, false) => AddressingMode::Atomic,
+        (false, true) if increment => AddressingMode::MemoryInc,
+        (true, false) if increment => AddressingMode::MemoryInc,
+        (false, true) if decrement => AddressingMode::MemoryDec,
+        (true, false) if decrement => AddressingMode::MemoryDec,
+        (false, true) => AddressingMode::Memory,
+        (true, false) => AddressingMode::Memory,
         //TODO(Kay): We should rethink the ISA things are getting fiddly already...
         _ => unreachable!(),
     }
