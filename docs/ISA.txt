@@ -23,7 +23,7 @@ None!
 ### Table
 BINARY REPR                                                              HEXDUMP            OPCODE                   CYCLES      FLAGS
 4 Bit    6 Bit          6 Bit         6 Bit      10 Bit
-[PI][SZ] [ OFFSET    ][ SOURCE    ] [ DEST     ] [ OPCODE            ]
+[PI][SZ] [ ADDRMODE  ][ SOURCE    ] [ DEST     ] [ OPCODE            ]
 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0   0x00000000         NOOP                     1           None
 ## MOVE.DW
 
@@ -37,12 +37,39 @@ addressed through a address register(A0..=A15). Further you can move a value int
 register postfix.
 
 ### Addressing Modes
-TODO!
+Atomic - Register to Register Moves.
+Immediate - Opcode is followed by a Value of the length specified by the sz field
+MemoryDest - Source from Register into MemoryDest.
+MemoryDestInc - Source from Register into MemoryDest increment Address of destination register.
+MemoryDestDec - Source from Register into MemoryDest decrement Address of destination register.
+MemorySrc - Memory Source into Register.
+MemorySrcInc - Memory Source into Register increment Address of source register.
+MemorySrcDec - Memory Source into Register decrement Address of source register.
+
+
+## OPCODE
+TODO Should we reverse the opcode in little endian format?
+This describes the "new" way of encoding things i __really__ hope that 12 Bit for encoding an opcode is enough...
+| |>                         ADDRESSING MODE BIT 4
+| | |>                       ADDRESSING MODE BIT 3
+| | | |>                     ADDRESSING MODE BIT 2
+| | | | |>                   ADDRESSING MODE BIT 1
+| | | | | |>                 ADDRESSING MODE BIT 0
+| | | | | | |>               OPCODE BIT 7
+| | | | | | | |>             OPCODE BIT 6
+| | | | | | | | |>           OPCODE BIT 5
+| | | | | | | | | |>         OPCODE BIT 4
+| | | | | | | | | | |>       OPCODE BIT 3
+| | | | | | | | | | | |>     OPCODE BIT 2
+| | | | | | | | | | | | |>   OPCODE BIT 1
+| | | | | | | | | | | | | |> OPCODE BIT 0
+[ OPCODE                   ]
+0 0 0 0 0 0 0 0 0 0 0 0 0 1
 
 ### Table
 BINARY REPR                                                              HEXDUMP            OPCODE                   CYCLES      FLAGS
-4 Bit    6 Bit          6 Bit         6 Bit      10 Bit
-[PI][SZ] [ OFFSET    ][ SOURCE    ] [ DEST     ] [ OPCODE            ]
+2 Bit    6 Bit       5 Bit  5 Bit         12 Bit
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ OPCODE                     ]
 0 0 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20000001         MOVE.DW     D0, D0       1           ?
 0 0 1 0  0 0 0 0  0 0 0 0  0 0 0 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20010001         MOVE.DW     D0, D1       1           ?
 0 0 1 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20020001         MOVE.DW     D0, D2       1           ?
@@ -78,22 +105,22 @@ BINARY REPR                                                              HEXDUMP
 0 0 1 0  0 0 0 0  0 0 0 1  1 1 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x201E0001         MOVE.DW     D0, A14      1           ?
 0 0 1 0  0 0 0 0  0 0 0 1  1 1 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x201F0001         MOVE.DW     D0, A15      1           ?
 
-0 0 1 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20300001         MOVE.DW     D0, (A0)     16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  0 0 0 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20310001         MOVE.DW     D0, (A1)     16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  0 0 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20320001         MOVE.DW     D0, (A2)     16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  0 0 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20330001         MOVE.DW     D0, (A3)     16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20340001         MOVE.DW     D0, (A4)     16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  0 1 0 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20350001         MOVE.DW     D0, (A5)     16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  0 1 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20360001         MOVE.DW     D0, (A6)     16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  0 1 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20370001         MOVE.DW     D0, (A7)     16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20380001         MOVE.DW     D0, (A8)     16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  1 0 0 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20390001         MOVE.DW     D0, (A9)     16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  1 0 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203A0001         MOVE.DW     D0, (A10)    16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  1 0 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203B0001         MOVE.DW     D0, (A11)    16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  1 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203C0001         MOVE.DW     D0, (A12)    16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  1 1 0 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203D0001         MOVE.DW     D0, (A13)    16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  1 1 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203E0001         MOVE.DW     D0, (A14)    16          ?
-0 0 1 0  0 0 0 0  0 0 1 1  1 1 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203F0001         MOVE.DW     D0, (A15)    16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20300001         MOVE.DW     D0, (A0)     16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  0 0 0 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20310001         MOVE.DW     D0, (A1)     16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  0 0 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20320001         MOVE.DW     D0, (A2)     16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  0 0 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20330001         MOVE.DW     D0, (A3)     16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20340001         MOVE.DW     D0, (A4)     16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  0 1 0 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20350001         MOVE.DW     D0, (A5)     16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  0 1 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20360001         MOVE.DW     D0, (A6)     16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  0 1 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20370001         MOVE.DW     D0, (A7)     16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20380001         MOVE.DW     D0, (A8)     16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  1 0 0 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x20390001         MOVE.DW     D0, (A9)     16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  1 0 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203A0001         MOVE.DW     D0, (A10)    16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  1 0 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203B0001         MOVE.DW     D0, (A11)    16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  1 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203C0001         MOVE.DW     D0, (A12)    16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  1 1 0 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203D0001         MOVE.DW     D0, (A13)    16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  1 1 1 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203E0001         MOVE.DW     D0, (A14)    16          ?
+0 0 1 0  0 0 0 0  0 0 1 0  1 1 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x203F0001         MOVE.DW     D0, (A15)    16          ?
 
 0 1 1 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x60300001         MOVE.DW     D0, (A0)+    16          ?
 0 1 1 0  0 0 0 0  0 0 1 1  0 0 0 1  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x60310001         MOVE.DW     D0, (A1)+    16          ?
