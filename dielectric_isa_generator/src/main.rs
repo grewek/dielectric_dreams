@@ -70,7 +70,7 @@ fn generate_listing_for(
                     opcode_size,
                     inc_mode,
                 );
-                generate_isa_for_opcode(file, pattern);
+                //generate_isa_for_opcode(file, pattern);
             }
         }
     }
@@ -237,7 +237,8 @@ pub fn generate_atomic_move_opcode(
         | opcode
 }
 
-pub fn generate_isa_for_opcode(file: &mut File, pattern: u32) {
+//TODO(Kay): We should do this once we nailed down the isa a bit more...i expect there will be more refactors :(
+/*pub fn generate_isa_for_opcode(file: &mut File, pattern: u32) {
     let pattern = BitPattern::new(pattern);
     let opcode = pattern.into();
 
@@ -279,7 +280,7 @@ pub fn generate_isa_for_opcode(file: &mut File, pattern: u32) {
         },
         Opcode::Unknown => (),
     }
-}
+}*/
 
 fn main() {
     let mut output = File::create("docs/generated_isa.txt").unwrap();
