@@ -101,7 +101,20 @@ impl Execute for MoveOpcode {
                 offset,
                 size,
             } => {
-                todo!()
+                let destination = *destination;
+                let source = *source;
+                let dest_index: u32 = destination.into();
+                let source_index: u32 = source.into();
+
+                let data_to_write =
+                    size.retrieve_data(register_file.registers[source_index as usize]);
+                let command = size.memory_write_command(
+                    register_file.registers[dest_index as usize],
+                    data_to_write,
+                );
+
+                memory.memory_bus_write(command);
+                register_file.registers[dest_index as usize] += size.size_in_bytes();
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemoryDestDec,
@@ -110,7 +123,20 @@ impl Execute for MoveOpcode {
                 offset,
                 size,
             } => {
-                todo!()
+                let destination = *destination;
+                let source = *source;
+                let dest_index: u32 = destination.into();
+                let source_index: u32 = source.into();
+
+                let data_to_write =
+                    size.retrieve_data(register_file.registers[source_index as usize]);
+                let command = size.memory_write_command(
+                    register_file.registers[dest_index as usize],
+                    data_to_write,
+                );
+
+                memory.memory_bus_write(command);
+                register_file.registers[dest_index as usize] -= size.size_in_bytes();
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemorySrcInc,
@@ -119,7 +145,16 @@ impl Execute for MoveOpcode {
                 offset,
                 size,
             } => {
-                todo!()
+                let destination = *destination;
+                let source = *source;
+                let dest_index: u32 = destination.into();
+                let source_index: u32 = source.into();
+
+                let address = register_file.registers[source_index as usize];
+                let data_to_write = memory.memory_bus_read(size, address);
+
+                register_file.registers[dest_index as usize] = data_to_write;
+                register_file.registers[source_index as usize] += size.size_in_bytes();
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemorySrcDec,
@@ -128,7 +163,16 @@ impl Execute for MoveOpcode {
                 offset,
                 size,
             } => {
-                todo!()
+                let destination = *destination;
+                let source = *source;
+                let dest_index: u32 = destination.into();
+                let source_index: u32 = source.into();
+
+                let address = register_file.registers[source_index as usize];
+                let data_to_write = memory.memory_bus_read(size, address);
+
+                register_file.registers[dest_index as usize] = data_to_write;
+                register_file.registers[source_index as usize] -= size.size_in_bytes();
             }
         }
     }
