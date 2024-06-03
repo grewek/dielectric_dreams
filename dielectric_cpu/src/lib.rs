@@ -1,6 +1,6 @@
 pub mod cpu;
 
-use cpu::opcode_size::OpcodeSize;
+use cpu::{opcode_size::OpcodeSize, register::Register};
 
 const MEMORY_SIZE: usize = 128 * (1024 * 1024);
 
@@ -94,5 +94,19 @@ struct RegisterFile {
 impl RegisterFile {
     fn new() -> Self {
         Self { registers: [0; 32] }
+    }
+
+    fn write_value(&mut self, dest: &Register, value: u32) {
+        let dest = *dest;
+        let dest_index: u32 = dest.into();
+
+        self.registers[dest_index as usize] = value;
+    }
+
+    fn read_value(&self, src: &Register) -> u32 {
+        let src = *src;
+        let src_index: u32 = src.into();
+
+        self.registers[src_index as usize]
     }
 }
