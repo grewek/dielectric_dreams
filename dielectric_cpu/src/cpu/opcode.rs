@@ -38,14 +38,10 @@ impl Execute for MoveOpcode {
             } => {
                 //TODO(Kay): Figure out if these should affect any flags, in most ISAs i know these
                 //           do __not__ affect the flags in any way or form!
-                let destination = *destination;
-                let source = *source;
-                let dest_index: u32 = destination.into();
-                let source_index: u32 = source.into();
-                let data_to_write =
-                    size.retrieve_data(register_file.registers[source_index as usize]);
+                let raw_value: u32 = register_file.read_value(source);
+                let data_to_write = size.retrieve_data(raw_value);
 
-                register_file.registers[dest_index as usize] = data_to_write;
+                register_file.write_value(destination, data_to_write);
             }
             MoveOpcode {
                 addr_mode: AddressingMode::Immediate,
@@ -63,17 +59,11 @@ impl Execute for MoveOpcode {
                 offset,
                 size,
             } => {
-                let destination = *destination;
-                let source = *source;
-                let dest_index: u32 = destination.into();
-                let source_index: u32 = source.into();
+                let raw_value: u32 = register_file.read_value(source);
 
-                let data_to_write =
-                    size.retrieve_data(register_file.registers[source_index as usize]);
-                let command = size.memory_write_command(
-                    register_file.registers[dest_index as usize],
-                    data_to_write,
-                );
+                let data_to_write = size.retrieve_data(raw_value);
+                let command =
+                    size.memory_write_command(register_file.read_value(destination), data_to_write);
 
                 memory.memory_bus_write(command);
             }
@@ -84,15 +74,10 @@ impl Execute for MoveOpcode {
                 offset,
                 size,
             } => {
-                let destination = *destination;
-                let source = *source;
-                let dest_index: u32 = destination.into();
-                let source_index: u32 = source.into();
-
-                let address = register_file.registers[source_index as usize];
+                let address = register_file.read_value(source);
                 let data_to_write = memory.memory_bus_read(size, address);
 
-                register_file.registers[dest_index as usize] = data_to_write;
+                register_file.write_value(destination, data_to_write);
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemoryDestInc,
@@ -101,20 +86,13 @@ impl Execute for MoveOpcode {
                 offset,
                 size,
             } => {
-                let destination = *destination;
-                let source = *source;
-                let dest_index: u32 = destination.into();
-                let source_index: u32 = source.into();
-
-                let data_to_write =
-                    size.retrieve_data(register_file.registers[source_index as usize]);
-                let command = size.memory_write_command(
-                    register_file.registers[dest_index as usize],
-                    data_to_write,
-                );
+                let data_to_write = size.retrieve_data(register_file.read_value(source));
+                let address = register_file.read_value(destination);
+                let command = size.memory_write_command(address, data_to_write);
 
                 memory.memory_bus_write(command);
-                register_file.registers[dest_index as usize] += size.size_in_bytes();
+
+                register_file.write_value(destination, address + size.size_in_bytes())
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemoryDestDec,
@@ -123,20 +101,13 @@ impl Execute for MoveOpcode {
                 offset,
                 size,
             } => {
-                let destination = *destination;
-                let source = *source;
-                let dest_index: u32 = destination.into();
-                let source_index: u32 = source.into();
-
-                let data_to_write =
-                    size.retrieve_data(register_file.registers[source_index as usize]);
-                let command = size.memory_write_command(
-                    register_file.registers[dest_index as usize],
-                    data_to_write,
-                );
+                let data_to_write = size.retrieve_data(register_file.read_value(source));
+                let address = register_file.read_value(destination);
+                let command = size.memory_write_command(address, data_to_write);
 
                 memory.memory_bus_write(command);
-                register_file.registers[dest_index as usize] -= size.size_in_bytes();
+
+                register_file.write_value(destination, address - size.size_in_bytes());
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemorySrcInc,
@@ -145,16 +116,11 @@ impl Execute for MoveOpcode {
                 offset,
                 size,
             } => {
-                let destination = *destination;
-                let source = *source;
-                let dest_index: u32 = destination.into();
-                let source_index: u32 = source.into();
-
-                let address = register_file.registers[source_index as usize];
+                let address = register_file.read_value(source);
                 let data_to_write = memory.memory_bus_read(size, address);
 
-                register_file.registers[dest_index as usize] = data_to_write;
-                register_file.registers[source_index as usize] += size.size_in_bytes();
+                register_file.write_value(destination, data_to_write);
+                register_file.write_value(source, address + size.size_in_bytes());
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemorySrcDec,
@@ -163,16 +129,11 @@ impl Execute for MoveOpcode {
                 offset,
                 size,
             } => {
-                let destination = *destination;
-                let source = *source;
-                let dest_index: u32 = destination.into();
-                let source_index: u32 = source.into();
-
-                let address = register_file.registers[source_index as usize];
+                let address = register_file.read_value(source);
                 let data_to_write = memory.memory_bus_read(size, address);
 
-                register_file.registers[dest_index as usize] = data_to_write;
-                register_file.registers[source_index as usize] -= size.size_in_bytes();
+                register_file.write_value(destination, data_to_write);
+                register_file.write_value(source, address - size.size_in_bytes());
             }
         }
     }
