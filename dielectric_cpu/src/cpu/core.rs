@@ -180,188 +180,246 @@ mod test {
 
     #[test]
     fn test_move_memory_dword_execution() {
-        let opcode = generate_opcode(
-            AddressingMode::MemorySrc,
-            Register::D0,
-            Register::A0,
-            0,
-            OpcodeSize::Dword,
-        );
+        for data_reg in DATA_REGISTERS {
+            for src_reg in ADDRESS_REGISTERS {
+                let opcode = generate_opcode(
+                    AddressingMode::MemorySrc,
+                    data_reg,
+                    src_reg,
+                    0,
+                    OpcodeSize::Dword,
+                );
+                let mut cpu = Cpu::new();
+                let src_index: u32 = src_reg.into();
+                let dest_index: u32 = data_reg.into();
+                cpu.register_file.registers[src_index as usize] = 0x7000BA5;
+                let opcode = cpu.decoder(opcode);
 
-        let mut cpu = Cpu::new();
-        cpu.register_file.registers[16] = 0x7000BA5;
-        let opcode = cpu.decoder(opcode);
+                cpu.memory.bytes[0x7000BA5] = 0xAA;
+                cpu.memory.bytes[0x7000BA6] = 0xBB;
+                cpu.memory.bytes[0x7000BA7] = 0xCC;
+                cpu.memory.bytes[0x7000BA8] = 0xDD;
+                cpu.execution_stage(opcode);
 
-        cpu.memory.bytes[0x7000BA5] = 0xAA;
-        cpu.memory.bytes[0x7000BA6] = 0xBB;
-        cpu.memory.bytes[0x7000BA7] = 0xCC;
-        cpu.memory.bytes[0x7000BA8] = 0xDD;
-        cpu.execution_stage(opcode);
-
-        assert_eq!(cpu.register_file.registers[0], 0xAABBCCDD);
+                assert_eq!(cpu.register_file.registers[dest_index as usize], 0xAABBCCDD);
+            }
+        }
     }
 
     #[test]
     fn test_move_memory_word_execution() {
-        let opcode = generate_opcode(
-            AddressingMode::MemorySrc,
-            Register::D0,
-            Register::A0,
-            0,
-            OpcodeSize::Word,
-        );
+        for data_reg in DATA_REGISTERS {
+            for src_reg in ADDRESS_REGISTERS {
+                let opcode = generate_opcode(
+                    AddressingMode::MemorySrc,
+                    data_reg,
+                    src_reg,
+                    0,
+                    OpcodeSize::Word,
+                );
+                let mut cpu = Cpu::new();
+                let src_index: u32 = src_reg.into();
+                let dest_index: u32 = data_reg.into();
+                cpu.register_file.registers[src_index as usize] = 0x7000BA5;
+                let opcode = cpu.decoder(opcode);
 
-        let mut cpu = Cpu::new();
-        cpu.register_file.registers[16] = 0x7000BA5;
-        let opcode = cpu.decoder(opcode);
+                cpu.memory.bytes[0x7000BA5] = 0xAA;
+                cpu.memory.bytes[0x7000BA6] = 0xBB;
+                cpu.memory.bytes[0x7000BA7] = 0xCC;
+                cpu.memory.bytes[0x7000BA8] = 0xDD;
+                cpu.execution_stage(opcode);
 
-        cpu.memory.bytes[0x7000BA5] = 0xAA;
-        cpu.memory.bytes[0x7000BA6] = 0xBB;
-        cpu.memory.bytes[0x7000BA7] = 0xCC;
-        cpu.memory.bytes[0x7000BA8] = 0xDD;
-        cpu.execution_stage(opcode);
-
-        assert_eq!(cpu.register_file.registers[0], 0x0000AABB);
+                assert_eq!(cpu.register_file.registers[dest_index as usize], 0x0000AABB);
+            }
+        }
     }
 
     #[test]
     fn test_move_memory_byte_execution() {
-        let opcode = generate_opcode(
-            AddressingMode::MemorySrc,
-            Register::D0,
-            Register::A0,
-            0,
-            OpcodeSize::Byte,
-        );
+        for data_reg in DATA_REGISTERS {
+            for src_reg in ADDRESS_REGISTERS {
+                let opcode = generate_opcode(
+                    AddressingMode::MemorySrc,
+                    data_reg,
+                    src_reg,
+                    0,
+                    OpcodeSize::Byte,
+                );
 
-        let mut cpu = Cpu::new();
-        cpu.register_file.registers[16] = 0x7000BA5;
-        let opcode = cpu.decoder(opcode);
+                let mut cpu = Cpu::new();
+                let src_index: u32 = src_reg.into();
+                let dest_index: u32 = data_reg.into();
+                cpu.register_file.registers[src_index as usize] = 0x7000BA5;
+                let opcode = cpu.decoder(opcode);
 
-        cpu.memory.bytes[0x7000BA5] = 0xAA;
-        cpu.memory.bytes[0x7000BA6] = 0xBB;
-        cpu.memory.bytes[0x7000BA7] = 0xCC;
-        cpu.memory.bytes[0x7000BA8] = 0xDD;
-        cpu.execution_stage(opcode);
+                cpu.memory.bytes[0x7000BA5] = 0xAA;
+                cpu.memory.bytes[0x7000BA6] = 0xBB;
+                cpu.memory.bytes[0x7000BA7] = 0xCC;
+                cpu.memory.bytes[0x7000BA8] = 0xDD;
+                cpu.execution_stage(opcode);
 
-        assert_eq!(cpu.register_file.registers[0], 0x000000AA);
+                assert_eq!(cpu.register_file.registers[dest_index as usize], 0x000000AA);
+            }
+        }
     }
 
     #[test]
     fn test_move_dword_registers_execution() {
-        let opcode = generate_opcode(
-            AddressingMode::Atomic,
-            Register::D0,
-            Register::D5,
-            0,
-            OpcodeSize::Dword,
-        );
-        let mut cpu = Cpu::new();
-        cpu.register_file.registers[5] = 0xAABBCCDD;
-        let opcode = cpu.decoder(opcode);
-        cpu.execution_stage(opcode);
+        for dest_reg in ALL_REGISTERS {
+            for src_reg in ALL_REGISTERS {
+                let opcode = generate_opcode(
+                    AddressingMode::Atomic,
+                    dest_reg,
+                    src_reg,
+                    0,
+                    OpcodeSize::Dword,
+                );
 
-        assert_eq!(
-            cpu.register_file.registers[0],
-            cpu.register_file.registers[5]
-        );
+                let mut cpu = Cpu::new();
+                let src_index: u32 = src_reg.into();
+                let dest_index: u32 = dest_reg.into();
+                cpu.register_file.registers[src_index as usize] = 0xAABBCCDD;
+                let opcode = cpu.decoder(opcode);
+                cpu.execution_stage(opcode);
+
+                assert_eq!(
+                    cpu.register_file.registers[dest_index as usize],
+                    cpu.register_file.registers[src_index as usize]
+                );
+            }
+        }
     }
 
     #[test]
     fn test_move_word_registers_execution() {
-        let opcode = generate_opcode(
-            AddressingMode::Atomic,
-            Register::D1,
-            Register::D3,
-            0,
-            OpcodeSize::Word,
-        );
-        let mut cpu = Cpu::new();
-        cpu.register_file.registers[3] = 0xAABBCCDD;
-        let opcode = cpu.decoder(opcode);
-        cpu.execution_stage(opcode);
+        for dest_reg in ALL_REGISTERS {
+            for src_reg in ALL_REGISTERS {
+                let opcode = generate_opcode(
+                    AddressingMode::Atomic,
+                    dest_reg,
+                    src_reg,
+                    0,
+                    OpcodeSize::Word,
+                );
 
-        assert_eq!(cpu.register_file.registers[1], 0x0000CCDD);
+                let mut cpu = Cpu::new();
+                let src_index: u32 = src_reg.into();
+                let dest_index: u32 = dest_reg.into();
+                cpu.register_file.registers[src_index as usize] = 0xAABBCCDD;
+                let opcode = cpu.decoder(opcode);
+                cpu.execution_stage(opcode);
+
+                assert_eq!(cpu.register_file.registers[dest_index as usize], 0x0000CCDD);
+            }
+        }
     }
 
     #[test]
     fn test_move_byte_registers_execution() {
-        let opcode = generate_opcode(
-            AddressingMode::Atomic,
-            Register::D2,
-            Register::D15,
-            0,
-            OpcodeSize::Byte,
-        );
-        let mut cpu = Cpu::new();
-        cpu.register_file.registers[15] = 0xAABBCCDD;
-        let opcode = cpu.decoder(opcode);
-        cpu.execution_stage(opcode);
+        for dest_reg in ALL_REGISTERS {
+            for src_reg in ALL_REGISTERS {
+                let opcode = generate_opcode(
+                    AddressingMode::Atomic,
+                    dest_reg,
+                    src_reg,
+                    0,
+                    OpcodeSize::Byte,
+                );
 
-        assert_eq!(cpu.register_file.registers[2], 0x000000DD);
+                let mut cpu = Cpu::new();
+                let src_index: u32 = src_reg.into();
+                let dest_index: u32 = dest_reg.into();
+                cpu.register_file.registers[src_index as usize] = 0xAABBCCDD;
+                let opcode = cpu.decoder(opcode);
+                cpu.execution_stage(opcode);
+
+                assert_eq!(cpu.register_file.registers[dest_index as usize], 0x000000DD);
+            }
+        }
     }
 
     #[test]
     fn test_move_byte_register_into_memory_execution() {
-        let opcode = generate_opcode(
-            AddressingMode::MemoryDest,
-            Register::A0,
-            Register::D1,
-            0,
-            OpcodeSize::Byte,
-        );
-        let mut cpu = Cpu::new();
-        cpu.register_file.registers[1] = 0xDEADBEEF;
-        cpu.register_file.registers[16] = 0x05403502;
-        let opcode = cpu.decoder(opcode);
-        cpu.execution_stage(opcode);
+        for dest_reg in ADDRESS_REGISTERS {
+            for src_reg in DATA_REGISTERS {
+                let opcode = generate_opcode(
+                    AddressingMode::MemoryDest,
+                    dest_reg,
+                    src_reg,
+                    0,
+                    OpcodeSize::Byte,
+                );
 
-        assert_eq!(
-            cpu.memory.memory_bus_read(&OpcodeSize::Byte, 0x05403502),
-            0x000000EF
-        );
+                let mut cpu = Cpu::new();
+                let src_index: u32 = src_reg.into();
+                let dest_index: u32 = dest_reg.into();
+                cpu.register_file.registers[src_index as usize] = 0xDEADBEEF;
+                cpu.register_file.registers[dest_index as usize] = 0x05403502;
+                let opcode = cpu.decoder(opcode);
+                cpu.execution_stage(opcode);
+
+                assert_eq!(
+                    cpu.memory.memory_bus_read(&OpcodeSize::Byte, 0x05403502),
+                    0x000000EF
+                );
+            }
+        }
     }
 
     #[test]
     fn test_move_word_register_into_memory_execution() {
-        let opcode = generate_opcode(
-            AddressingMode::MemoryDest,
-            Register::A0,
-            Register::D1,
-            0,
-            OpcodeSize::Word,
-        );
-        let mut cpu = Cpu::new();
-        cpu.register_file.registers[1] = 0xDEADBEEF;
-        cpu.register_file.registers[16] = 0x05403502;
-        let opcode = cpu.decoder(opcode);
-        cpu.execution_stage(opcode);
+        for dest_reg in ADDRESS_REGISTERS {
+            for src_reg in DATA_REGISTERS {
+                let opcode = generate_opcode(
+                    AddressingMode::MemoryDest,
+                    dest_reg,
+                    src_reg,
+                    0,
+                    OpcodeSize::Word,
+                );
 
-        assert_eq!(
-            cpu.memory.memory_bus_read(&OpcodeSize::Word, 0x05403502),
-            0x0000BEEF
-        );
+                let mut cpu = Cpu::new();
+                let src_index: u32 = src_reg.into();
+                let dest_index: u32 = dest_reg.into();
+                cpu.register_file.registers[src_index as usize] = 0xDEADBEEF;
+                cpu.register_file.registers[dest_index as usize] = 0x05403502;
+                let opcode = cpu.decoder(opcode);
+                cpu.execution_stage(opcode);
+
+                assert_eq!(
+                    cpu.memory.memory_bus_read(&OpcodeSize::Word, 0x05403502),
+                    0x0000BEEF
+                );
+            }
+        }
     }
 
     #[test]
     fn test_move_dword_register_into_memory_execution() {
-        let opcode = generate_opcode(
-            AddressingMode::MemoryDest,
-            Register::A0,
-            Register::D1,
-            0,
-            OpcodeSize::Dword,
-        );
-        let mut cpu = Cpu::new();
-        cpu.register_file.registers[1] = 0xDEADBEEF;
-        cpu.register_file.registers[16] = 0x05403502;
-        let opcode = cpu.decoder(opcode);
-        cpu.execution_stage(opcode);
+        for dest_reg in ADDRESS_REGISTERS {
+            for src_reg in DATA_REGISTERS {
+                let opcode = generate_opcode(
+                    AddressingMode::MemoryDest,
+                    dest_reg,
+                    src_reg,
+                    0,
+                    OpcodeSize::Dword,
+                );
 
-        assert_eq!(
-            cpu.memory.memory_bus_read(&OpcodeSize::Dword, 0x05403502),
-            0xDEADBEEF
-        );
+                let mut cpu = Cpu::new();
+                let src_index: u32 = src_reg.into();
+                let dest_index: u32 = dest_reg.into();
+                cpu.register_file.registers[src_index as usize] = 0xDEADBEEF;
+                cpu.register_file.registers[dest_index as usize] = 0x05403502;
+                let opcode = cpu.decoder(opcode);
+                cpu.execution_stage(opcode);
+
+                assert_eq!(
+                    cpu.memory.memory_bus_read(&OpcodeSize::Dword, 0x05403502),
+                    0xDEADBEEF
+                );
+            }
+        }
     }
 
     #[test]
