@@ -7,7 +7,7 @@ use crate::RegisterFile;
 pub struct Cpu {
     register_file: RegisterFile,
     status_register: u32,
-    ip: u32,
+    pc: u32,
     memory: Memory,
 }
 
@@ -24,7 +24,7 @@ impl Cpu {
             register_file: RegisterFile::new(),
             memory: Memory::new(),
             status_register: 0,
-            ip: 0,
+            pc: 0,
         }
     }
 
