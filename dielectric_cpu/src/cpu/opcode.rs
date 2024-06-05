@@ -8,9 +8,9 @@ pub enum Opcode {
 }
 
 impl Execute for Opcode {
-    fn execute(&self, register_file: &mut RegisterFile, memory: &mut Memory) {
+    fn execute(&self, pc: &mut u32, register_file: &mut RegisterFile, memory: &mut Memory) {
         match self {
-            Opcode::Move(data) => data.execute(register_file, memory),
+            Opcode::Move(data) => data.execute(pc, register_file, memory),
             Opcode::Unknown => todo!(),
         }
     }
@@ -27,7 +27,7 @@ pub struct MoveOpcode {
 }
 
 impl Execute for MoveOpcode {
-    fn execute(&self, register_file: &mut RegisterFile, memory: &mut Memory) {
+    fn execute(&self, pc: &mut u32, register_file: &mut RegisterFile, memory: &mut Memory) {
         match self {
             MoveOpcode {
                 addr_mode: AddressingMode::Atomic,
@@ -140,5 +140,5 @@ impl Execute for MoveOpcode {
 }
 
 pub(crate) trait Execute {
-    fn execute(&self, register_file: &mut RegisterFile, memory: &mut Memory);
+    fn execute(&self, pc: &mut u32, register_file: &mut RegisterFile, memory: &mut Memory);
 }
