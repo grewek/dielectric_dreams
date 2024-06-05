@@ -46,11 +46,13 @@ impl Execute for MoveOpcode {
             MoveOpcode {
                 addr_mode: AddressingMode::Immediate,
                 destination,
-                source,
-                offset,
-                size,
+                source: _,
+                offset: _,
+                size: _,
             } => {
-                todo!()
+                *pc += 4;
+                let value = memory.read_dword(*pc);
+                register_file.write_value(destination, value);
             }
             MoveOpcode {
                 addr_mode: AddressingMode::MemoryDest,
