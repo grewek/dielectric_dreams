@@ -1,12 +1,13 @@
 use super::decoder::BitPattern;
 use super::opcode::Opcode;
 use crate::cpu::opcode::Execute;
+use crate::cpu::status_register::StatusRegister;
 use crate::Memory;
 use crate::RegisterFile;
 
 pub struct Cpu {
     register_file: RegisterFile,
-    status_register: u32,
+    status_register: StatusRegister,
     pc: u32,
     memory: Memory,
 }
@@ -23,7 +24,7 @@ impl Cpu {
         Self {
             register_file: RegisterFile::new(),
             memory: Memory::new(),
-            status_register: 0,
+            status_register: StatusRegister::new(),
             pc: 0,
         }
     }
