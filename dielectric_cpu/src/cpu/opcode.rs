@@ -33,7 +33,7 @@ impl Execute for MoveOpcode {
                 addr_mode: AddressingMode::Atomic,
                 destination,
                 source,
-                offset,
+                offset: _,
                 size,
             } => {
                 //TODO(Kay): Figure out if these should affect any flags, in most ISAs i know these
@@ -58,7 +58,7 @@ impl Execute for MoveOpcode {
                 addr_mode: AddressingMode::MemoryDest,
                 destination,
                 source,
-                offset,
+                offset: _,
                 size,
             } => {
                 let raw_value: u32 = register_file.read_value(source);
@@ -73,7 +73,7 @@ impl Execute for MoveOpcode {
                 addr_mode: AddressingMode::MemorySrc,
                 destination,
                 source,
-                offset,
+                offset: _,
                 size,
             } => {
                 let address = register_file.read_value(source);
@@ -85,7 +85,7 @@ impl Execute for MoveOpcode {
                 addr_mode: AddressingMode::MemoryDestInc,
                 destination,
                 source,
-                offset,
+                offset: _,
                 size,
             } => {
                 let data_to_write = size.retrieve_data(register_file.read_value(source));
@@ -100,7 +100,7 @@ impl Execute for MoveOpcode {
                 addr_mode: AddressingMode::MemoryDestDec,
                 destination,
                 source,
-                offset,
+                offset: _,
                 size,
             } => {
                 let data_to_write = size.retrieve_data(register_file.read_value(source));
@@ -115,7 +115,7 @@ impl Execute for MoveOpcode {
                 addr_mode: AddressingMode::MemorySrcInc,
                 destination,
                 source,
-                offset,
+                offset: _,
                 size,
             } => {
                 let address = register_file.read_value(source);
@@ -128,7 +128,7 @@ impl Execute for MoveOpcode {
                 addr_mode: AddressingMode::MemorySrcDec,
                 destination,
                 source,
-                offset,
+                offset: _,
                 size,
             } => {
                 let address = register_file.read_value(source);
