@@ -1,4 +1,4 @@
-enum Flags {
+pub(crate) enum Flags {
     Negative = 0x8000,  //The value is negative
     Overflow = 0x4000,  //A Over/Underflow occured while doing the operation
     Carry = 0x2000,     //The value did not fit and it carried a one into the status register
@@ -9,26 +9,26 @@ enum Flags {
                      //...
 }
 
-struct StatusRegister {
+pub(crate) struct StatusRegister {
     flags: u16,
 }
 
 impl StatusRegister {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self { flags: 0x00 }
     }
 
-    fn raise(&mut self, flag: Flags) {
+    pub(crate) fn raise(&mut self, flag: Flags) {
         let target_flag = flag as usize;
         self.flags |= 1 << target_flag;
     }
 
-    fn clear(&mut self, flag: Flags) {
+    pub(crate) fn clear(&mut self, flag: Flags) {
         let target_flag = flag as usize;
         self.flags &= 1 << target_flag;
     }
 
-    fn status_bits(&self) -> u16 {
+    pub(crate) fn status_bits(&self) -> u16 {
         self.flags
     }
 }

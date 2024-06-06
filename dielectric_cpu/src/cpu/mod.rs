@@ -4,4 +4,4 @@ pub mod decoder;
 pub mod opcode;
 pub mod opcode_size;
 pub mod register;
-mod status_register;
+pub mod status_register;
