@@ -142,5 +142,11 @@ impl Execute for MoveOpcode {
 }
 
 pub(crate) trait Execute {
-    fn execute(&self, pc: &mut u32, register_file: &mut RegisterFile, memory: &mut Memory);
+    fn execute(
+        &self,
+        pc: &mut u32,
+        register_file: &mut RegisterFile,
+        status_register: &mut StatusRegister,
+        memory: &mut Memory,
+    );
 }
