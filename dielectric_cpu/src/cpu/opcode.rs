@@ -1,4 +1,9 @@
-use super::{addressing_modes::AddressingMode, opcode_size::OpcodeSize, register::Register};
+use super::{
+    addressing_modes::AddressingMode,
+    opcode_size::OpcodeSize,
+    register::Register,
+    status_register::{Flags, StatusRegister},
+};
 use crate::{Memory, RegisterFile};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -8,9 +13,15 @@ pub enum Opcode {
 }
 
 impl Execute for Opcode {
-    fn execute(&self, pc: &mut u32, register_file: &mut RegisterFile, memory: &mut Memory) {
+    fn execute(
+        &self,
+        pc: &mut u32,
+        register_file: &mut RegisterFile,
+        status_register: &mut StatusRegister,
+        memory: &mut Memory,
+    ) {
         match self {
-            Opcode::Move(data) => data.execute(pc, register_file, memory),
+            Opcode::Move(data) => data.execute(pc, register_file, status_register, memory),
             Opcode::Unknown => todo!(),
         }
     }
@@ -27,7 +38,13 @@ pub struct MoveOpcode {
 }
 
 impl Execute for MoveOpcode {
-    fn execute(&self, pc: &mut u32, register_file: &mut RegisterFile, memory: &mut Memory) {
+    fn execute(
+        &self,
+        pc: &mut u32,
+        register_file: &mut RegisterFile,
+        status_register: &mut StatusRegister,
+        memory: &mut Memory,
+    ) {
         match self {
             MoveOpcode {
                 addr_mode: AddressingMode::Atomic,
@@ -36,8 +53,6 @@ impl Execute for MoveOpcode {
                 offset: _,
                 size,
             } => {
-                //TODO(Kay): Figure out if these should affect any flags, in most ISAs i know these
-                //           do __not__ affect the flags in any way or form!
                 let raw_value: u32 = register_file.read_value(source);
                 let data_to_write = size.retrieve_data(raw_value);
 
@@ -138,6 +153,14 @@ impl Execute for MoveOpcode {
                 register_file.write_value(source, address - size.size_in_bytes());
             }
         }
+
+        //NOTE: Update the register flags right after we have written the values
+        if register_file.last_written_value() == 0x00 {
+            status_register.raise(Flags::Zero);
+        } else {
+            status_register.clear(Flags::Zero);
+        }
+        //TODO: Update the negative flag!
     }
 }
 
