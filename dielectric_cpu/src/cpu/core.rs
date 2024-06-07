@@ -36,7 +36,12 @@ impl Cpu {
 
     //TODO(Kay): Refactor to the Opcode enum!
     pub fn execution_stage(&mut self, opcode: Opcode) {
-        opcode.execute(&mut self.pc, &mut self.register_file, &mut self.memory);
+        opcode.execute(
+            &mut self.pc,
+            &mut self.register_file,
+            &mut self.status_register,
+            &mut self.memory,
+        );
     }
 }
 
