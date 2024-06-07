@@ -1,12 +1,13 @@
 pub(crate) enum Flags {
-    Negative = 0x8000,  //The value is negative
-    Overflow = 0x4000,  //A Over/Underflow occured while doing the operation
-    Carry = 0x2000,     //The value did not fit and it carried a one into the status register
-    Parity = 0x1000, //If the amount of Bits set in the last operation was even this bit is set if it is odd it will be off
-    Zero = 0x0800,   //The value was zero...
-    Interrupt = 0x0400, //Interrupt flag used to indicate that something important happended
-    Trap = 0x0200,   //Trapflag used for debugging
-                     //...
+    Negative = 15,       //The value is negative
+    Overflow = 14,       //A Over/Underflow occured while doing the operation
+    Carry = 13,          //The value did not fit and it carried a one into the status register
+    Parity = 12, //If the amount of Bits set in the last operation was even this bit is set if it is odd it will be off
+    Zero = 11,   //The value was zero...
+    Interrupt = 10, //Interrupt flag used to indicate that something important happend
+    InterruptEnable = 9, //Interrupts are only handled if this flag is one!
+    Trap = 8,    //Trapflag used for debugging
+                 //...
 }
 
 pub(crate) struct StatusRegister {
