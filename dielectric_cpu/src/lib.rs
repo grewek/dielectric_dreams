@@ -89,11 +89,15 @@ impl Memory {
 struct RegisterFile {
     //D0..D15 & A0..A15
     registers: [u32; 32],
+    last_written: u32,
 }
 
 impl RegisterFile {
     fn new() -> Self {
-        Self { registers: [0; 32] }
+        Self {
+            registers: [0; 32],
+            last_written: 0x00,
+        }
     }
 
     fn write_value(&mut self, dest: &Register, value: u32) {
@@ -101,6 +105,7 @@ impl RegisterFile {
         let dest_index: u32 = dest.into();
 
         self.registers[dest_index as usize] = value;
+        self.last_written = value;
     }
 
     fn read_value(&self, src: &Register) -> u32 {
@@ -108,5 +113,9 @@ impl RegisterFile {
         let src_index: u32 = src.into();
 
         self.registers[src_index as usize]
+    }
+
+    fn last_written_value(&self) -> u32 {
+        return self.last_written;
     }
 }
