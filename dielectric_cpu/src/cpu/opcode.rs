@@ -155,12 +155,19 @@ impl Execute for MoveOpcode {
         }
 
         //NOTE: Update the register flags right after we have written the values
-        if register_file.last_written_value() == 0x00 {
+        let value = register_file.last_written_value();
+        if value == 0x00 {
             status_register.raise(Flags::Zero);
         } else {
             status_register.clear(Flags::Zero);
         }
-        //TODO: Update the negative flag!
+
+        let sign_mask: u32 = 1 << 31;
+        if value & sign_mask == 0x80000000 {
+            status_register.raise(Flags::Negative)
+        } else {
+            status_register.clear(Flags::Negative);
+        }
     }
 }
 
