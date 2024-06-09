@@ -12,6 +12,18 @@ Current Issues:
     * The Opcode tables will be insanely huge :( 
 
 
+# Addressing Modes
+Atomic - Register to Register Moves.
+Immediate - Opcode is followed by a Value of the length specified by the sz field
+MemoryDest - Source from Register into MemoryDest.
+MemoryDestInc - Source from Register into MemoryDest increment Address of destination register.
+MemoryDestDec - Source from Register into MemoryDest decrement Address of destination register.
+MemorySrc - Memory Source into Register.
+MemorySrcInc - Memory Source into Register increment Address of source register.
+MemorySrcDec - Memory Source into Register decrement Address of source register.
+
+# Opcodes
+
 ## NOOP
 
 ### Description
@@ -33,7 +45,7 @@ Copies the value in the source register into the destination register. Sets the 
 ### Table
 
 ### Legend
-  /  = Either a Data Register or Address Register.
+  /  = Either a Data Register or an Address Register.
   Imm8 = Immediate Byte value.
   Imm16 = Immediate Word value.
   Imm32 = Immediate Dword value.
@@ -60,8 +72,8 @@ Moves the value of a source register into the memory that is specified by the de
 
 [SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 1    0x00000201         MOVE.B  (An),Dn             ?          Z,N(?)
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 1    0x00000201         MOVE.W  (An),Dn             ?          Z,N(?)
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 1    0x00000201         MOVE.DW (An),Dn             ?          Z,N(?)
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 1    0x40000201         MOVE.W  (An),Dn             ?          Z,N(?)
+1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 1    0x80000201         MOVE.DW (An),Dn             ?          Z,N(?)
 
 ## MOVE(Memory Source)
 
@@ -69,37 +81,42 @@ Moves a value from memory pointed to by an address register into the specified d
 
 [SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 0 1    0x00000301         MOVE.B  Dn,(An)             ?          Z,N(?)
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 0 1    0x00000301         MOVE.W  Dn,(An)             ?          Z,N(?)
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 0 1    0x00000301         MOVE.DW Dn,(An)             ?          Z,N(?)
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 0 1    0x40000301         MOVE.W  Dn,(An)             ?          Z,N(?)
+1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 0 1    0x80000301         MOVE.DW Dn,(An)             ?          Z,N(?)
+
+## Move (Memory Dest Increment)
+
+Move a value from the specified data register into the location specified by the address register. Increase the target pointer
+by the size of the SZ field.
+
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 0 1    0x00000401         MOVE.B  (An)+,Dn             ?          Z,N(?)
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 0 1    0x40000401         MOVE.W  (An)+,Dn             ?          Z,N(?)
+1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 0 1    0x80000401         MOVE.DW (An)+,Dn             ?          Z,N(?)
+
+## Move (Memory Src Increment)
+Move a value from Memory indicated by the specified address register into the target data register. Increase the target pointer
+by the size of the SZ field.
+
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 1  0 0 0 0  0 0 0 1    0x00000501         MOVE.B  Dn,(An)+             ?          Z,N(?)
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 1  0 0 0 0  0 0 0 1    0x40000501         MOVE.W  Dn,(An)+             ?          Z,N(?)
+1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 1  0 0 0 0  0 0 0 1    0x80000501         MOVE.DW Dn,(An)+             ?          Z,N(?)
 
 
-### Addressing Modes
-Atomic - Register to Register Moves.
-Immediate - Opcode is followed by a Value of the length specified by the sz field
-MemoryDest - Source from Register into MemoryDest.
-MemoryDestInc - Source from Register into MemoryDest increment Address of destination register.
-MemoryDestDec - Source from Register into MemoryDest decrement Address of destination register.
-MemorySrc - Memory Source into Register.
-MemorySrcInc - Memory Source into Register increment Address of source register.
-MemorySrcDec - Memory Source into Register decrement Address of source register.
+## Move (Memory Dest Decrement)
+Move a value from the specified data register into the location specified by the address register. Decrease the target pointer
+by the size of the SZ field.
 
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 0 1    0x00000601         MOVE.B  (An)-,Dn             ?          Z,N(?)
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 0 1    0x40000601         MOVE.W  (An)-,Dn             ?          Z,N(?)
+1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 0 1    0x80000601         MOVE.DW (An)-,Dn             ?          Z,N(?)
 
-## OPCODE
-TODO Should we reverse the opcode in little endian format?
-This describes the "new" way of encoding things i __really__ hope that 12 Bit for encoding an opcode is enough...
-| |>                         ADDRESSING MODE BIT 4
-| | |>                       ADDRESSING MODE BIT 3
-| | | |>                     ADDRESSING MODE BIT 2
-| | | | |>                   ADDRESSING MODE BIT 1
-| | | | | |>                 ADDRESSING MODE BIT 0
-| | | | | | |>               OPCODE BIT 7
-| | | | | | | |>             OPCODE BIT 6
-| | | | | | | | |>           OPCODE BIT 5
-| | | | | | | | | |>         OPCODE BIT 4
-| | | | | | | | | | |>       OPCODE BIT 3
-| | | | | | | | | | | |>     OPCODE BIT 2
-| | | | | | | | | | | | |>   OPCODE BIT 1
-| | | | | | | | | | | | | |> OPCODE BIT 0
-[ OPCODE    |             ]
-0 0 0 0 0 0 0 0 0 0 0 0 0 1
-1 1 1 0 9 8 7 6 5 4 3 2 1 0
+## Move (Memory Source Decrement)
+Move a value from Memory indicated by the specified address register into the target data register. Decrease the target pointer
+by the size of the SZ field.
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x00000701         MOVE.B  Dn,(An)+             ?          Z,N(?)
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x40000701         MOVE.W  Dn,(An)+             ?          Z,N(?)
+1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x80000701         MOVE.DW Dn,(An)+             ?          Z,N(?)
