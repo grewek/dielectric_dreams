@@ -24,26 +24,6 @@ MemorySrcDec - Memory Source into Register decrement Address of source register.
 
 # Opcodes
 
-## NOOP
-
-### Description
-Does nothing. Waits for one cycle and resumes execution!
-
-### Addressing Modes
-None!
-
-### Table
-BINARY REPR                                                              HEXDUMP            OPCODE                   CYCLES      FLAGS
-4 Bit    6 Bit          6 Bit         6 Bit      10 Bit
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ OPCODE                     ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0   0x00000000         NOOP                      1           None
-
-## MOVE(Atomic Mode)
-
-Copies the value in the source register into the destination register. Sets the Zero and Negative flags in accordance to the copied value.
-
-### Table
-
 ### Legend
   /  = Either a Data Register or an Address Register.
   Imm8 = Immediate Byte value.
@@ -51,6 +31,20 @@ Copies the value in the source register into the destination register. Sets the 
   Imm32 = Immediate Dword value.
   Dn = D0-15
   An = A0-15
+
+## NOOP
+
+### Description
+Does nothing. Waits for one cycle and resumes execution!
+
+BINARY REPR                                                              HEXDUMP            OPCODE                   CYCLES      FLAGS
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ OPCODE                     ]
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0   0x00000000         NOOP                      1           None
+
+## MOVE(Atomic Mode)
+
+Copies the value in the source register into the destination register. Sets the Zero and Negative flags in accordance to the copied value.
+
 
 [SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x00000001         MOVE.B  Dn/An,Dn/An       1           Z,N
@@ -116,6 +110,7 @@ by the size of the SZ field.
 ## Move (Memory Source Decrement)
 Move a value from Memory indicated by the specified address register into the target data register. Decrease the target pointer
 by the size of the SZ field.
+
 [SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x00000701         MOVE.B  Dn,(An)+             ?          Z,N(?)
 0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x40000701         MOVE.W  Dn,(An)+             ?          Z,N(?)
