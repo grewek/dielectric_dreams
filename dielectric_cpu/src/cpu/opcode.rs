@@ -9,6 +9,7 @@ use crate::{Memory, RegisterFile};
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
     Move(MoveOpcode),
+    Lea(LeaOpcode),
     Unknown,
 }
 
@@ -22,6 +23,7 @@ impl Execute for Opcode {
     ) {
         match self {
             Opcode::Move(data) => data.execute(pc, register_file, status_register, memory),
+            Opcode::Lea(data) => data.execute(pc, register_file, status_register, memory),
             Opcode::Unknown => todo!(),
         }
     }
@@ -168,6 +170,31 @@ impl Execute for MoveOpcode {
         } else {
             status_register.clear(Flags::Negative);
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct LeaOpcode {
+    pub destination: Register,
+}
+
+impl Execute for LeaOpcode {
+    fn execute(
+        &self,
+        pc: &mut u32,
+        register_file: &mut RegisterFile,
+        status_register: &mut StatusRegister,
+        memory: &mut Memory,
+    ) {
+        if !(self.destination >= Register::A0 && self.destination <= Register::A15) {
+            unreachable!("Lea opcode can only be used with the Registers A0 to A15")
+        }
+
+        let dest_index: u32 = self.destination.into();
+        *pc += 4;
+
+        let address = memory.read_dword(*pc);
+        register_file.registers[dest_index as usize] = address;
     }
 }
 
