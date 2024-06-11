@@ -178,8 +178,14 @@ mod test {
     fn test_move_dword_registers() {
         for dest in &ALL_REGISTERS {
             for src in &ALL_REGISTERS {
-                let opcode =
-                    generate_opcode(AddressingMode::Atomic, *dest, *src, 0, OpcodeSize::Dword);
+                let opcode = generate_opcode(
+                    0x01,
+                    AddressingMode::Atomic,
+                    *dest,
+                    Some(*src),
+                    0,
+                    OpcodeSize::Dword,
+                );
 
                 let result = get_decoder_result(opcode);
                 let expected =
@@ -194,9 +200,10 @@ mod test {
         for data_reg in DATA_REGISTERS {
             for src_reg in ADDRESS_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::MemorySrc,
                     data_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Dword,
                 );
@@ -222,9 +229,10 @@ mod test {
         for data_reg in DATA_REGISTERS {
             for src_reg in ADDRESS_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::MemorySrc,
                     data_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Word,
                 );
@@ -250,9 +258,10 @@ mod test {
         for data_reg in DATA_REGISTERS {
             for src_reg in ADDRESS_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::MemorySrc,
                     data_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Byte,
                 );
@@ -279,9 +288,10 @@ mod test {
         for dest_reg in ALL_REGISTERS {
             for src_reg in ALL_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::Atomic,
                     dest_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Dword,
                 );
@@ -306,9 +316,10 @@ mod test {
         for dest_reg in ALL_REGISTERS {
             for src_reg in ALL_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::Atomic,
                     dest_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Word,
                 );
@@ -330,9 +341,10 @@ mod test {
         for dest_reg in ALL_REGISTERS {
             for src_reg in ALL_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::Atomic,
                     dest_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Byte,
                 );
@@ -354,9 +366,10 @@ mod test {
         for dest_reg in ADDRESS_REGISTERS {
             for src_reg in DATA_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::MemoryDest,
                     dest_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Byte,
                 );
@@ -382,9 +395,10 @@ mod test {
         for dest_reg in ADDRESS_REGISTERS {
             for src_reg in DATA_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::MemoryDest,
                     dest_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Word,
                 );
@@ -410,9 +424,10 @@ mod test {
         for dest_reg in ADDRESS_REGISTERS {
             for src_reg in DATA_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::MemoryDest,
                     dest_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Dword,
                 );
@@ -438,9 +453,10 @@ mod test {
         for dest_reg in DATA_REGISTERS {
             for src_reg in ADDRESS_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::MemorySrcInc,
                     dest_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Byte,
                 );
@@ -464,9 +480,10 @@ mod test {
         for dest_reg in DATA_REGISTERS {
             for src_reg in ADDRESS_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::MemorySrcInc,
                     dest_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Word,
                 );
@@ -490,9 +507,10 @@ mod test {
         for dest_reg in DATA_REGISTERS {
             for src_reg in ADDRESS_REGISTERS {
                 let opcode = generate_opcode(
+                    0x01,
                     AddressingMode::MemorySrcInc,
                     dest_reg,
-                    src_reg,
+                    Some(src_reg),
                     0,
                     OpcodeSize::Dword,
                 );
@@ -516,9 +534,10 @@ mod test {
         //TODO(Kay): Add the rest of the registers as well!
         for address_register in &ADDRESS_REGISTERS {
             let opcode = generate_opcode(
+                0x01,
                 AddressingMode::MemorySrc,
                 Register::D0,
-                *address_register,
+                Some(*address_register),
                 0,
                 OpcodeSize::Dword,
             );
