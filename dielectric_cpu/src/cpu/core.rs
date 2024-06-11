@@ -551,4 +551,28 @@ mod test {
             assert_eq!(result, expected, "Failed {:?}, {:?}", result, expected);
         }
     }
+
+    #[test]
+    fn test_opcode_load_effective_address() {
+        for dest_reg in ADDRESS_REGISTERS {
+            let opcode = generate_opcode(
+                0x02,
+                AddressingMode::Immediate,
+                dest_reg,
+                None,
+                0,
+                OpcodeSize::Dword,
+            );
+            let mut cpu = Cpu::new();
+
+            let dest_index: u32 = dest_reg.into();
+            cpu.pc = 0xDEADBEEB;
+            cpu.memory.write_dword(0x05403502, 0xC0EDCAFE);
+            let opcode = cpu.decoder(opcode);
+            cpu.execution_stage(opcode);
+
+            assert_eq!(cpu.register_file.registers[dest_index as usize], 0xC0EDCAFE);
+            assert_eq!(cpu.pc, 0x05403502);
+        }
+    }
 }
