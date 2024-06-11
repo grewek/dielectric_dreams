@@ -148,21 +148,26 @@ mod test {
     }
 
     fn generate_opcode(
+        opcode: u32,
         mode: AddressingMode,
         dest: Register,
-        src: Register,
+        src: Option<Register>,
         offset: u32,
         size: OpcodeSize,
     ) -> u32 {
         let size: u32 = size.into();
         let mode: u32 = mode.into();
 
-        let src: u32 = src.into();
+        let src: u32 = if let Some(src) = src {
+            src.into()
+        } else {
+            0x00
+        };
 
         let dest: u32 = dest.into();
 
         let result =
-            (size << 30) | (offset << 24) | (src << 19) | (dest << 14) | (mode << 8) | 0x01;
+            (size << 30) | (offset << 24) | (src << 19) | (dest << 14) | (mode << 8) | opcode;
         dbg!(result);
         result
     }
