@@ -174,7 +174,7 @@ impl Execute for MoveOpcode {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-struct LeaOpcode {
+pub struct LeaOpcode {
     pub destination: Register,
 }
 
