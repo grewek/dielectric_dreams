@@ -45,7 +45,6 @@ BINARY REPR                                                              HEXDUMP
 
 Copies the value in the source register into the destination register. Sets the Zero and Negative flags in accordance to the copied value.
 
-
 [SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x00000001         MOVE.B  Dn/An,Dn/An       1           Z,N
 0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x40000001         MOVE.W  Dn/An,Dn/An       1           Z,N
@@ -115,3 +114,11 @@ by the size of the SZ field.
 0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x00000701         MOVE.B  Dn,(An)+             ?          Z,N(?)
 0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x40000701         MOVE.W  Dn,(An)+             ?          Z,N(?)
 1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x80000701         MOVE.DW Dn,(An)+             ?          Z,N(?)
+
+
+## LEA (Load Effective Address)
+
+Load the immediate value into the address register indicated by the destination.
+
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
+1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 1 0    0x80000702         LEA.DW An,#Imm32              ?          None
