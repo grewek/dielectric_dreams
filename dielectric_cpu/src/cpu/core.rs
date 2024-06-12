@@ -566,7 +566,7 @@ mod test {
             let mut cpu = Cpu::new();
 
             let dest_index: u32 = dest_reg.into();
-            cpu.pc = 0xDEADBEEB;
+            cpu.pc = 0x54034FE;
             cpu.memory.write_dword(0x05403502, 0xC0EDCAFE);
             let opcode = cpu.decoder(opcode);
             cpu.execution_stage(opcode);
