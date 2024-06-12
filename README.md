@@ -19,3 +19,5 @@ my rough plan is (if i will ever finish it...):
 [chipverify](https://www.chipverify.com/verilog/verilog-tutorial)
 [fpga4fun](https://www.fpga4fun.com/)
 [MIT Courseware 6.111](http://web.mit.edu/6.111/volume2/www/f2019/index.html)
+[EDX Building a RISC-V Core](https://www.edx.org/learn/design/the-linux-foundation-building-a-risc-v-cpu-core)
+[FreeRange VHDL](https://www.isy.liu.se/edu/kurs/TSEA83/kursmaterial/vhdl/free_range_vhdl_2019.pdf)
