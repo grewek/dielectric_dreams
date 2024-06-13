@@ -34,6 +34,15 @@ impl Cpu {
         raw_opcode.into()
     }
 
+    pub fn cycle(&mut self) {
+        //TODO: Check if we need to handle interrupts!
+        //TODO: We need to count the amount of elapsed cycles after every step!
+        let value = self.memory.read_dword(self.pc);
+        let opcode = self.decoder(value);
+
+        self.execution_stage(opcode);
+    }
+
     //TODO(Kay): Refactor to the Opcode enum!
     pub fn execution_stage(&mut self, opcode: Opcode) {
         opcode.execute(
