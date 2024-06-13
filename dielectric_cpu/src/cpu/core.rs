@@ -584,4 +584,26 @@ mod test {
             assert_eq!(cpu.pc, 0x05403502);
         }
     }
+    #[test]
+    fn test_full_cpu_cycle() {
+        let opcode = generate_opcode(
+            0x01,
+            AddressingMode::Atomic,
+            Register::D0,
+            Some(Register::D1),
+            0,
+            OpcodeSize::Dword,
+        );
+        let mut cpu = Cpu::new();
+
+        cpu.memory.write_dword(0x00000000, opcode);
+        cpu.register_file.write_value(&Register::D1, 0xDEADBEEF);
+
+        cpu.cycle();
+
+        assert_eq!(
+            cpu.register_file.registers[0],
+            cpu.register_file.registers[1]
+        );
+    }
 }
