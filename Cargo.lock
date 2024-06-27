@@ -3,6 +3,10 @@
 version = 3
 
 [[package]]
+name = "assembler"
+version = "0.1.0"
+
+[[package]]
 name = "dielectric_cpu"
 version = "0.1.0"
 
