@@ -35,15 +35,12 @@ impl<'a> Tokenizer<'a> {
 
     fn digest_identifier(&mut self) -> (usize, usize) {
         let start = self.position;
-        while self.position < self.source.len()
-            && self
-                .source
-                .chars()
-                .nth(self.position)
-                .unwrap()
-                .is_alphabetic()
-        {
-            self.advance();
+        while let Some(ch) = self.source.chars().nth(self.position) {
+            if ch.is_alphabetic() {
+                self.advance();
+            } else {
+                break;
+            }
         }
 
         (start, self.position)
@@ -74,7 +71,7 @@ impl<'a> Iterator for Tokenizer<'a> {
                 }));
             }
 
-            self.position += 1;
+            self.advance();
         }
     }
 }
