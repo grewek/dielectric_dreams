@@ -129,4 +129,45 @@ mod tests {
 
         assert_eq!(tokenizer.position, source.len());
     }
+
+    #[test]
+    fn test_identifier_whitespace_mix() {
+        let source = "move dest src";
+
+        let mut tokenizer = Tokenizer::new(source);
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Identifier(TokenInfo {
+                repr: "move",
+                start: 0,
+                end: "move".len(),
+            })
+        );
+
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Identifier(TokenInfo {
+                repr: "dest",
+                start: "move".len() + " ".len(),
+                end: "move".len() + " ".len() + "dest".len(),
+            })
+        );
+
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Identifier(TokenInfo {
+                repr: "src",
+                start: "move".len() + " ".len() + "dest".len() + " ".len(),
+                end: "move".len() + " ".len() + "dest".len() + " ".len() + "src".len(),
+            })
+        );
+
+        assert_eq!(tokenizer.position, source.len());
+    }
 }
