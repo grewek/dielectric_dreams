@@ -1,7 +1,7 @@
 //NOTE: Achievement for this project:
-//      - Get a working Assembler that can produces executable code for my architecture
+//      - Get a working Assembler that can produce executable code for my architecture
 //      - Trying to get better in TDD but it's usage shouldn't be as dogmatic as many people practice it...
-
+//      - create a lib instead of a binary, i usually always create binaries but i should learn to work more with libs :)
 #[derive(Debug, Eq, PartialEq)]
 enum Token<'a> {
     Identifier(TokenInfo<'a>),
@@ -36,7 +36,7 @@ impl<'a> Tokenizer<'a> {
     fn digest_identifier(&mut self) -> (usize, usize) {
         let start = self.position;
         while let Some(ch) = self.source.chars().nth(self.position) {
-            if ch.is_alphabetic() {
+            if ch.is_alphabetic() || ch == '_' {
                 self.advance();
             } else {
                 break;
@@ -55,23 +55,19 @@ impl<'a> Iterator for Tokenizer<'a> {
                 return None;
             }
 
-            if self
-                .source
-                .chars()
-                .nth(self.position)
-                .unwrap()
-                .is_alphabetic()
-            {
-                let (start, end) = self.digest_identifier();
+            match self.source.chars().nth(self.position) {
+                Some(ch) if ch.is_alphabetic() || ch == '_' => {
+                    let (start, end) = self.digest_identifier();
 
-                return Some(Token::Identifier(TokenInfo {
-                    repr: &self.source[start..end],
-                    start,
-                    end,
-                }));
-            }
-
-            self.advance();
+                    return Some(Token::Identifier(TokenInfo {
+                        repr: &self.source[start..end],
+                        start,
+                        end,
+                    }));
+                }
+                Some(_) => self.advance(),
+                _ => unreachable!(),
+            };
         }
     }
 }
@@ -79,6 +75,16 @@ impl<'a> Iterator for Tokenizer<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_empty_source() {
+        let source = "";
+        let mut tokenizer = Tokenizer::new(source);
+
+        let token = tokenizer.next();
+
+        assert_eq!(token, None);
+    }
 
     #[test]
     fn test_discards_whitespace() {
@@ -119,6 +125,25 @@ mod tests {
             token.unwrap(),
             Token::Identifier(TokenInfo {
                 repr: "move",
+                start: 0,
+                end: source.len(),
+            })
+        );
+
+        assert_eq!(tokenizer.position, source.len());
+    }
+
+    #[test]
+    fn test_generate_identifiers_underscore() {
+        let source = "_move";
+        let mut tokenizer = Tokenizer::new(source);
+
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Identifier(TokenInfo {
+                repr: "_move",
                 start: 0,
                 end: source.len(),
             })
