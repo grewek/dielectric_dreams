@@ -3,9 +3,16 @@
 //      - Trying to get better in TDD but it's usage shouldn't be as dogmatic as many people practice it...
 //      - create a lib instead of a binary, i usually always create binaries but i should learn to work more with libs :)
 #[derive(Debug, Eq, PartialEq)]
+enum Operator {
+    PoundSign,
+    Percent,
+}
+
+#[derive(Debug, Eq, PartialEq)]
 enum Token<'a> {
     Identifier(TokenInfo<'a>),
     Number(TokenInfo<'a>, i32),
+    Operator(Operator, TokenInfo<'a>),
 }
 
 impl<'a> Token<'a> {
@@ -22,6 +29,10 @@ impl<'a> Token<'a> {
                 panic!("ERROR: Scanned Item was apparently not a value {}", repr)
             }),
         )
+    }
+
+    fn new_operator(operator: Operator, repr: &'a str, start: usize, end: usize) -> Self {
+        Self::Operator(operator, TokenInfo::new(repr, start, end))
     }
 }
 
@@ -83,29 +94,66 @@ impl<'a> Tokenizer<'a> {
 
         (start, self.position)
     }
+
+    fn digest_operator(&mut self) -> (Operator, usize, usize) {
+        let start = self.position;
+
+        //TODO(Kay): From?
+        let operator = match self.source.chars().nth(self.position) {
+            Some('#') => Operator::PoundSign,
+            Some('%') => Operator::Percent,
+            Some(_) => todo!(),
+            None => unreachable!(),
+        };
+
+        self.advance();
+
+        (operator, start, self.position)
+    }
+
+    fn digest_whitespace(&mut self) {
+        while let Some(ch) = self.source.chars().nth(self.position) {
+            if ch.is_whitespace() {
+                self.advance();
+            } else {
+                break;
+            }
+        }
+    }
 }
 
 impl<'a> Iterator for Tokenizer<'a> {
     type Item = Token<'a>;
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            if self.position == self.source.len() {
-                return None;
-            }
+        self.digest_whitespace();
 
-            match self.source.chars().nth(self.position) {
-                Some(ch) if ch.is_alphabetic() || ch == '_' => {
-                    let (start, end) = self.digest_identifier();
-                    return Some(Token::new_identifier(&self.source[start..end], start, end));
-                }
-                Some(ch) if ch.is_ascii_digit() || ch == '-' => {
-                    let (start, end) = self.digest_number();
-                    return Some(Token::new_number(&self.source[start..end], start, end));
-                }
-                Some(_) => self.advance(),
-                _ => unreachable!(),
-            };
+        if self.position == self.source.len() {
+            return None;
         }
+
+        match self.source.chars().nth(self.position) {
+            Some(ch) if ch.is_alphabetic() || ch == '_' => {
+                let (start, end) = self.digest_identifier();
+                return Some(Token::new_identifier(&self.source[start..end], start, end));
+            }
+            Some(ch) if ch.is_ascii_digit() || ch == '-' => {
+                let (start, end) = self.digest_number();
+                return Some(Token::new_number(&self.source[start..end], start, end));
+            }
+            Some(_) => {
+                //NOTE: Scanner is desperate it does not know what the next symbol is so it __must__
+                //      be a operator!
+                let (operator, start, end) = self.digest_operator();
+
+                return Some(Token::new_operator(
+                    operator,
+                    &self.source[start..end],
+                    start,
+                    end,
+                ));
+            }
+            _ => unreachable!(),
+        };
     }
 }
 
@@ -272,5 +320,38 @@ mod tests {
         );
 
         assert_eq!(tokenizer.position, source.len());
+    }
+
+    #[test]
+    fn parse_operators() {
+        let source = "#%$(),.:+-";
+
+        let mut tokenizer = Tokenizer::new(source);
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Operator(
+                Operator::PoundSign,
+                TokenInfo {
+                    repr: "#",
+                    start: 0,
+                    end: 1,
+                }
+            )
+        );
+
+        let token = tokenizer.next();
+        assert_eq!(
+            token.unwrap(),
+            Token::Operator(
+                Operator::Percent,
+                TokenInfo {
+                    repr: "%",
+                    start: 1,
+                    end: 2,
+                }
+            )
+        );
     }
 }
