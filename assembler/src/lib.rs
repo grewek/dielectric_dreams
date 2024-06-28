@@ -7,11 +7,23 @@ enum Token<'a> {
     Identifier(TokenInfo<'a>),
 }
 
+impl<'a> Token<'a> {
+    fn new_identifier(repr: &'a str, start: usize, end: usize) -> Self {
+        Self::Identifier(TokenInfo::new(repr, start, end))
+    }
+}
+
 #[derive(Debug, Eq, PartialEq)]
 struct TokenInfo<'a> {
     repr: &'a str,
     start: usize,
     end: usize,
+}
+
+impl<'a> TokenInfo<'a> {
+    fn new(repr: &'a str, start: usize, end: usize) -> Self {
+        Self { repr, start, end }
+    }
 }
 
 struct Tokenizer<'a> {
@@ -58,12 +70,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             match self.source.chars().nth(self.position) {
                 Some(ch) if ch.is_alphabetic() || ch == '_' => {
                     let (start, end) = self.digest_identifier();
-
-                    return Some(Token::Identifier(TokenInfo {
-                        repr: &self.source[start..end],
-                        start,
-                        end,
-                    }));
+                    return Some(Token::new_identifier(&self.source[start..end], start, end));
                 }
                 Some(_) => self.advance(),
                 _ => unreachable!(),
