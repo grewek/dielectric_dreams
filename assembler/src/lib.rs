@@ -5,11 +5,23 @@
 #[derive(Debug, Eq, PartialEq)]
 enum Token<'a> {
     Identifier(TokenInfo<'a>),
+    Number(TokenInfo<'a>, i32),
 }
 
 impl<'a> Token<'a> {
     fn new_identifier(repr: &'a str, start: usize, end: usize) -> Self {
         Self::Identifier(TokenInfo::new(repr, start, end))
+    }
+
+    fn new_number(repr: &'a str, start: usize, end: usize) -> Self {
+        //NOTE: Due to the way we parse numbers i am pretty sure that i can just unwrap here! and do not need to
+        //      care about the error state! But i might be wrong so lets add a panic in case anything goes haywire...
+        Self::Number(
+            TokenInfo::new(repr, start, end),
+            repr.parse().unwrap_or_else(|_| {
+                panic!("ERROR: Scanned Item was apparently not a value {}", repr)
+            }),
+        )
     }
 }
 
@@ -57,6 +69,20 @@ impl<'a> Tokenizer<'a> {
 
         (start, self.position)
     }
+
+    fn digest_number(&mut self) -> (usize, usize) {
+        let start = self.position;
+
+        while let Some(ch) = self.source.chars().nth(self.position) {
+            if ch.is_ascii_digit() || ch == '-' {
+                self.advance();
+            } else {
+                break;
+            }
+        }
+
+        (start, self.position)
+    }
 }
 
 impl<'a> Iterator for Tokenizer<'a> {
@@ -71,6 +97,10 @@ impl<'a> Iterator for Tokenizer<'a> {
                 Some(ch) if ch.is_alphabetic() || ch == '_' => {
                     let (start, end) = self.digest_identifier();
                     return Some(Token::new_identifier(&self.source[start..end], start, end));
+                }
+                Some(ch) if ch.is_ascii_digit() || ch == '-' => {
+                    let (start, end) = self.digest_number();
+                    return Some(Token::new_number(&self.source[start..end], start, end));
                 }
                 Some(_) => self.advance(),
                 _ => unreachable!(),
@@ -195,6 +225,50 @@ mod tests {
                 start: "move".len() + " ".len() + "dest".len() + " ".len(),
                 end: "move".len() + " ".len() + "dest".len() + " ".len() + "src".len(),
             })
+        );
+
+        assert_eq!(tokenizer.position, source.len());
+    }
+
+    #[test]
+    fn test_decimal_numbers() {
+        let source = "1337";
+
+        let mut tokenizer = Tokenizer::new(source);
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Number(
+                TokenInfo {
+                    repr: "1337",
+                    start: 0,
+                    end: source.len(),
+                },
+                1337
+            )
+        );
+
+        assert_eq!(tokenizer.position, source.len());
+    }
+
+    #[test]
+    fn test_negative_decimal_numbers() {
+        let source = "-1337";
+
+        let mut tokenizer = Tokenizer::new(source);
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Number(
+                TokenInfo {
+                    repr: "-1337",
+                    start: 0,
+                    end: source.len(),
+                },
+                -1337
+            )
         );
 
         assert_eq!(tokenizer.position, source.len());
