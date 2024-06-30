@@ -1,3 +1,4 @@
+use std::str;
 //NOTE: Achievement for this project:
 //      - Get a working Assembler that can produce executable code for my architecture
 //      - Trying to get better in TDD but it's usage shouldn't be as dogmatic as many people practice it...
@@ -6,24 +7,36 @@
 enum Operator {
     PoundSign,
     Percent,
+    DollarSign,
+    OpenParen,
+    CloseParen,
+    Comma,
+    Dot,
+    Colon,
+    Plus,
+    Minus,
 }
 
 #[derive(Debug, Eq, PartialEq)]
 enum Token<'a> {
     Identifier(TokenInfo<'a>),
-    Number(TokenInfo<'a>, i32),
+    DecimalNumber(TokenInfo<'a>, i32),
+    HexNumber(TokenInfo<'a>, u32),
+    BinaryNumber(TokenInfo<'a>, u32),
     Operator(Operator, TokenInfo<'a>),
 }
 
 impl<'a> Token<'a> {
-    fn new_identifier(repr: &'a str, start: usize, end: usize) -> Self {
+    fn new_identifier(repr: &'a [u8], start: usize, end: usize) -> Self {
+        let repr = str::from_utf8(repr).unwrap();
         Self::Identifier(TokenInfo::new(repr, start, end))
     }
 
-    fn new_number(repr: &'a str, start: usize, end: usize) -> Self {
+    fn new_number(repr: &'a [u8], start: usize, end: usize) -> Self {
         //NOTE: Due to the way we parse numbers i am pretty sure that i can just unwrap here! and do not need to
         //      care about the error state! But i might be wrong so lets add a panic in case anything goes haywire...
-        Self::Number(
+        let repr = str::from_utf8(repr).unwrap();
+        Self::DecimalNumber(
             TokenInfo::new(repr, start, end),
             repr.parse().unwrap_or_else(|_| {
                 panic!("ERROR: Scanned Item was apparently not a value {}", repr)
@@ -31,7 +44,34 @@ impl<'a> Token<'a> {
         )
     }
 
-    fn new_operator(operator: Operator, repr: &'a str, start: usize, end: usize) -> Self {
+    fn new_binary_number(repr: &'a [u8], start: usize, end: usize) -> Self {
+        let repr = str::from_utf8(repr).unwrap();
+
+        Self::BinaryNumber(
+            TokenInfo::new(repr, start, end),
+            u32::from_str_radix(repr, 2).unwrap_or_else(|_| {
+                panic!(
+                    "Error: Scanned item could not be converted into a hexadecimal value: {}",
+                    repr
+                )
+            }),
+        )
+    }
+    fn new_hex_number(repr: &'a [u8], start: usize, end: usize) -> Self {
+        let repr = str::from_utf8(repr).unwrap();
+        Self::HexNumber(
+            TokenInfo::new(repr, start, end),
+            u32::from_str_radix(repr, 16).unwrap_or_else(|_| {
+                panic!(
+                    "Error: Scanned Item could not be converted into a hexadecimal value: {}",
+                    repr
+                );
+            }),
+        )
+    }
+
+    fn new_operator(operator: Operator, repr: &'a [u8], start: usize, end: usize) -> Self {
+        let repr = str::from_utf8(repr).unwrap();
         Self::Operator(operator, TokenInfo::new(repr, start, end))
     }
 }
@@ -50,14 +90,14 @@ impl<'a> TokenInfo<'a> {
 }
 
 struct Tokenizer<'a> {
-    source: &'a str,
+    source: &'a [u8],
     position: usize,
 }
 
 impl<'a> Tokenizer<'a> {
     fn new(source: &'a str) -> Self {
         Self {
-            source,
+            source: source.as_bytes(),
             position: 0,
         }
     }
@@ -68,10 +108,14 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
+    fn peek(&mut self) -> Option<&u8> {
+        self.source.get(self.position + 1)
+    }
+
     fn digest_identifier(&mut self) -> (usize, usize) {
         let start = self.position;
-        while let Some(ch) = self.source.chars().nth(self.position) {
-            if ch.is_alphabetic() || ch == '_' {
+        while let Some(ch) = self.source.get(self.position) {
+            if ch.is_ascii_alphabetic() || *ch == b'_' {
                 self.advance();
             } else {
                 break;
@@ -81,11 +125,36 @@ impl<'a> Tokenizer<'a> {
         (start, self.position)
     }
 
-    fn digest_number(&mut self) -> (usize, usize) {
+    fn digest_binary_number(&mut self) -> (usize, usize) {
+        let start = self.position;
+        while let Some(ch) = self.source.get(self.position) {
+            if Tokenizer::is_binary(*ch) {
+                self.advance();
+            } else {
+                break;
+            }
+        }
+
+        (start, self.position)
+    }
+    fn digest_hex_number(&mut self) -> (usize, usize) {
+        let start = self.position;
+        while let Some(ch) = self.source.get(self.position) {
+            if Tokenizer::is_hexadecimal(*ch) {
+                self.advance();
+            } else {
+                break;
+            }
+        }
+
+        (start, self.position)
+    }
+
+    fn digest_decmial_number(&mut self) -> (usize, usize) {
         let start = self.position;
 
-        while let Some(ch) = self.source.chars().nth(self.position) {
-            if ch.is_ascii_digit() || ch == '-' {
+        while let Some(ch) = self.source.get(self.position) {
+            if ch.is_ascii_digit() || *ch == b'-' {
                 self.advance();
             } else {
                 break;
@@ -99,9 +168,17 @@ impl<'a> Tokenizer<'a> {
         let start = self.position;
 
         //TODO(Kay): From?
-        let operator = match self.source.chars().nth(self.position) {
-            Some('#') => Operator::PoundSign,
-            Some('%') => Operator::Percent,
+        let operator = match self.source.get(self.position) {
+            Some(b'#') => Operator::PoundSign,
+            Some(b'%') => Operator::Percent,
+            Some(b'$') => Operator::DollarSign,
+            Some(b'(') => Operator::OpenParen,
+            Some(b')') => Operator::CloseParen,
+            Some(b',') => Operator::Comma,
+            Some(b'.') => Operator::Dot,
+            Some(b':') => Operator::Colon,
+            Some(b'+') => Operator::Plus,
+            Some(b'-') => Operator::Minus,
             Some(_) => todo!(),
             None => unreachable!(),
         };
@@ -112,33 +189,64 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn digest_whitespace(&mut self) {
-        while let Some(ch) = self.source.chars().nth(self.position) {
-            if ch.is_whitespace() {
+        while let Some(ch) = self.source.get(self.position) {
+            if ch.is_ascii_whitespace() {
                 self.advance();
             } else {
                 break;
             }
         }
     }
-}
 
-impl<'a> Iterator for Tokenizer<'a> {
-    type Item = Token<'a>;
-    fn next(&mut self) -> Option<Self::Item> {
+    fn is_hexadecimal(symbol: u8) -> bool {
+        match symbol {
+            b'a'..=b'f' | b'A'..=b'F' => true,
+            b'0'..=b'9' => true,
+            _ => false,
+        }
+    }
+
+    fn is_binary(symbol: u8) -> bool {
+        match symbol {
+            b'0'..=b'1' => true,
+            _ => false,
+        }
+    }
+
+    fn next(&mut self) -> Option<Token<'a>> {
         self.digest_whitespace();
 
         if self.position == self.source.len() {
             return None;
         }
 
-        match self.source.chars().nth(self.position) {
-            Some(ch) if ch.is_alphabetic() || ch == '_' => {
+        match self.source.get(self.position) {
+            Some(ch) if ch.is_ascii_alphabetic() || *ch == b'_' => {
                 let (start, end) = self.digest_identifier();
                 return Some(Token::new_identifier(&self.source[start..end], start, end));
             }
-            Some(ch) if ch.is_ascii_digit() || ch == '-' => {
-                let (start, end) = self.digest_number();
+            Some(ch)
+                if *ch == b'#'
+                    && (self.peek().unwrap().is_ascii_digit() || *self.peek().unwrap() == b'-') =>
+            {
+                self.advance();
+                let (start, end) = self.digest_decmial_number();
                 return Some(Token::new_number(&self.source[start..end], start, end));
+            }
+            Some(ch) if *ch == b'$' && Tokenizer::is_hexadecimal(*self.peek().unwrap()) => {
+                self.advance();
+
+                let (start, end) = self.digest_hex_number();
+                return Some(Token::new_hex_number(&self.source[start..end], start, end));
+            }
+            Some(ch) if *ch == b'%' && Tokenizer::is_binary(*self.peek().unwrap()) => {
+                self.advance();
+                let (start, end) = self.digest_binary_number();
+                return Some(Token::new_binary_number(
+                    &self.source[start..end],
+                    start,
+                    end,
+                ));
             }
             Some(_) => {
                 //NOTE: Scanner is desperate it does not know what the next symbol is so it __must__
@@ -280,17 +388,17 @@ mod tests {
 
     #[test]
     fn test_decimal_numbers() {
-        let source = "1337";
+        let source = "#1337";
 
         let mut tokenizer = Tokenizer::new(source);
         let token = tokenizer.next();
 
         assert_eq!(
             token.unwrap(),
-            Token::Number(
+            Token::DecimalNumber(
                 TokenInfo {
                     repr: "1337",
-                    start: 0,
+                    start: 1,
                     end: source.len(),
                 },
                 1337
@@ -302,17 +410,17 @@ mod tests {
 
     #[test]
     fn test_negative_decimal_numbers() {
-        let source = "-1337";
+        let source = "#-1337";
 
         let mut tokenizer = Tokenizer::new(source);
         let token = tokenizer.next();
 
         assert_eq!(
             token.unwrap(),
-            Token::Number(
+            Token::DecimalNumber(
                 TokenInfo {
                     repr: "-1337",
-                    start: 0,
+                    start: 1,
                     end: source.len(),
                 },
                 -1337
@@ -327,10 +435,9 @@ mod tests {
         let source = "#%$(),.:+-";
 
         let mut tokenizer = Tokenizer::new(source);
-        let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            tokenizer.next().unwrap(),
             Token::Operator(
                 Operator::PoundSign,
                 TokenInfo {
@@ -341,9 +448,8 @@ mod tests {
             )
         );
 
-        let token = tokenizer.next();
         assert_eq!(
-            token.unwrap(),
+            tokenizer.next().unwrap(),
             Token::Operator(
                 Operator::Percent,
                 TokenInfo {
@@ -351,6 +457,153 @@ mod tests {
                     start: 1,
                     end: 2,
                 }
+            )
+        );
+
+        assert_eq!(
+            tokenizer.next().unwrap(),
+            Token::Operator(
+                Operator::DollarSign,
+                TokenInfo {
+                    repr: "$",
+                    start: 2,
+                    end: 3,
+                }
+            )
+        );
+
+        assert_eq!(
+            tokenizer.next().unwrap(),
+            Token::Operator(
+                Operator::OpenParen,
+                TokenInfo {
+                    repr: "(",
+                    start: 3,
+                    end: 4,
+                }
+            )
+        );
+
+        assert_eq!(
+            tokenizer.next().unwrap(),
+            Token::Operator(
+                Operator::CloseParen,
+                TokenInfo {
+                    repr: ")",
+                    start: 4,
+                    end: 5,
+                }
+            )
+        );
+
+        assert_eq!(
+            tokenizer.next().unwrap(),
+            Token::Operator(
+                Operator::Comma,
+                TokenInfo {
+                    repr: ",",
+                    start: 5,
+                    end: 6,
+                }
+            )
+        );
+
+        assert_eq!(
+            tokenizer.next().unwrap(),
+            Token::Operator(
+                Operator::Dot,
+                TokenInfo {
+                    repr: ".",
+                    start: 6,
+                    end: 7,
+                }
+            )
+        );
+
+        assert_eq!(
+            tokenizer.next().unwrap(),
+            Token::Operator(
+                Operator::Colon,
+                TokenInfo {
+                    repr: ":",
+                    start: 7,
+                    end: 8,
+                }
+            )
+        );
+
+        assert_eq!(
+            tokenizer.next().unwrap(),
+            Token::Operator(
+                Operator::Plus,
+                TokenInfo {
+                    repr: "+",
+                    start: 8,
+                    end: 9,
+                }
+            )
+        );
+
+        assert_eq!(
+            tokenizer.next().unwrap(),
+            Token::Operator(
+                Operator::Minus,
+                TokenInfo {
+                    repr: "-",
+                    start: 9,
+                    end: 10,
+                }
+            )
+        );
+    }
+
+    #[test]
+    fn peek_character() {
+        let source = "#-50";
+
+        let mut tokenizer = Tokenizer::new(source);
+
+        assert_eq!(tokenizer.peek(), Some(&b'-'));
+        tokenizer.next();
+        assert_eq!(tokenizer.peek(), None);
+    }
+
+    #[test]
+    fn test_hex_numbers() {
+        let source = "$65BBCCDD";
+
+        let mut tokenizer = Tokenizer::new(source);
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::HexNumber(
+                TokenInfo {
+                    repr: "65BBCCDD",
+                    start: 1,
+                    end: source.len(),
+                },
+                1706806493
+            )
+        );
+    }
+
+    #[test]
+    fn test_binary_numbers() {
+        let source = "%10110000";
+
+        let mut tokenizer = Tokenizer::new(source);
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::BinaryNumber(
+                TokenInfo {
+                    repr: "10110000",
+                    start: 1,
+                    end: source.len(),
+                },
+                176
             )
         );
     }
