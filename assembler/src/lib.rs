@@ -179,7 +179,7 @@ impl<'a> Tokenizer<'a> {
             Some(b':') => Operator::Colon,
             Some(b'+') => Operator::Plus,
             Some(b'-') => Operator::Minus,
-            Some(_) => todo!(),
+            Some(ch) => todo!("Reached a {}", ch),
             None => unreachable!(),
         };
 
