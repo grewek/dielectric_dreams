@@ -115,7 +115,7 @@ impl<'a> Tokenizer<'a> {
     fn digest_identifier(&mut self) -> (usize, usize) {
         let start = self.position;
         while let Some(ch) = self.source.get(self.position) {
-            if ch.is_ascii_alphabetic() || *ch == b'_' {
+            if ch.is_ascii_alphabetic() || ch.is_ascii_digit() || *ch == b'_' {
                 self.advance();
             } else {
                 break;
