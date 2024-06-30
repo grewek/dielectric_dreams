@@ -607,4 +607,28 @@ mod tests {
             )
         );
     }
+
+    #[test]
+    fn test_move() {
+        let source = "move.dw D0,A5";
+
+        let mut tokenizer = Tokenizer::new(source);
+        let opcode_token = tokenizer.next();
+        let dot_token = tokenizer.next();
+        let size_token = tokenizer.next();
+        let dest_token = tokenizer.next();
+        let comma_token = tokenizer.next();
+        let source_token = tokenizer.next();
+
+        assert_eq!(
+            opcode_token.unwrap(),
+            Token::Identifier(TokenInfo {
+                repr: "move",
+                start: 0,
+                end: "move".len()
+            })
+        )
+
+        //TODO(Kay): For tomorrow finish the test and see if we can pass it without further modifications in the code!
+    }
 }
