@@ -627,8 +627,67 @@ mod tests {
                 start: 0,
                 end: "move".len()
             })
-        )
+        );
 
+        assert_eq!(
+            dot_token.unwrap(),
+            Token::Operator(
+                Operator::Dot,
+                TokenInfo {
+                    repr: ".",
+                    start: "move".len(),
+                    end: "move".len() + ".".len(),
+                }
+            )
+        );
+
+        assert_eq!(
+            size_token.unwrap(),
+            Token::Identifier(TokenInfo {
+                repr: "dw",
+                start: "move".len() + ".".len(),
+                end: "move".len() + ".".len() + "dw".len(),
+            })
+        );
+
+        assert_eq!(
+            dest_token.unwrap(),
+            Token::Identifier(TokenInfo {
+                repr: "D0",
+                start: "move".len() + ".".len() + "dw".len() + " ".len(),
+                end: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len(),
+            })
+        );
+
+        assert_eq!(
+            comma_token.unwrap(),
+            Token::Operator(
+                Operator::Comma,
+                TokenInfo {
+                    repr: ",",
+                    start: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len(),
+                    end: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len() + ",".len(),
+                }
+            )
+        );
+
+        assert_eq!(
+            source_token.unwrap(),
+            Token::Identifier(TokenInfo {
+                repr: "A5",
+                start: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len() + ",".len(),
+                //Baaahhh thats disgusting... Okay i think we are ready to refactor the tests...
+                end: "move".len()
+                    + ".".len()
+                    + "dw".len()
+                    + " ".len()
+                    + "D0".len()
+                    + ",".len()
+                    + "A5".len(),
+            })
+        );
+
+        assert_eq!(tokenizer.next(), None);
         //TODO(Kay): For tomorrow finish the test and see if we can pass it without further modifications in the code!
     }
 }
