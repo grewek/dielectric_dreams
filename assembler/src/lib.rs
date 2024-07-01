@@ -688,6 +688,5 @@ mod tests {
         );
 
         assert_eq!(tokenizer.next(), None);
-        //TODO(Kay): For tomorrow finish the test and see if we can pass it without further modifications in the code!
     }
 }
