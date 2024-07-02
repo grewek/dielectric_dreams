@@ -27,28 +27,28 @@ enum Token<'a> {
 }
 
 impl<'a> Token<'a> {
-    fn new_identifier(repr: &'a [u8], start: usize, end: usize) -> Self {
+    fn new_identifier(repr: &'a [u8], start: usize, end: usize, line: usize) -> Self {
         let repr = str::from_utf8(repr).unwrap();
-        Self::Identifier(TokenInfo::new(repr, start, end))
+        Self::Identifier(TokenInfo::new(repr, start, end, line))
     }
 
-    fn new_number(repr: &'a [u8], start: usize, end: usize) -> Self {
+    fn new_number(repr: &'a [u8], start: usize, end: usize, line: usize) -> Self {
         //NOTE: Due to the way we parse numbers i am pretty sure that i can just unwrap here! and do not need to
         //      care about the error state! But i might be wrong so lets add a panic in case anything goes haywire...
         let repr = str::from_utf8(repr).unwrap();
         Self::DecimalNumber(
-            TokenInfo::new(repr, start, end),
+            TokenInfo::new(repr, start, end, line),
             repr.parse().unwrap_or_else(|_| {
                 panic!("ERROR: Scanned Item was apparently not a value {}", repr)
             }),
         )
     }
 
-    fn new_binary_number(repr: &'a [u8], start: usize, end: usize) -> Self {
+    fn new_binary_number(repr: &'a [u8], start: usize, end: usize, line: usize) -> Self {
         let repr = str::from_utf8(repr).unwrap();
 
         Self::BinaryNumber(
-            TokenInfo::new(repr, start, end),
+            TokenInfo::new(repr, start, end, line),
             u32::from_str_radix(repr, 2).unwrap_or_else(|_| {
                 panic!(
                     "Error: Scanned item could not be converted into a hexadecimal value: {}",
@@ -57,10 +57,10 @@ impl<'a> Token<'a> {
             }),
         )
     }
-    fn new_hex_number(repr: &'a [u8], start: usize, end: usize) -> Self {
+    fn new_hex_number(repr: &'a [u8], start: usize, end: usize, line: usize) -> Self {
         let repr = str::from_utf8(repr).unwrap();
         Self::HexNumber(
-            TokenInfo::new(repr, start, end),
+            TokenInfo::new(repr, start, end, line),
             u32::from_str_radix(repr, 16).unwrap_or_else(|_| {
                 panic!(
                     "Error: Scanned Item could not be converted into a hexadecimal value: {}",
@@ -70,9 +70,15 @@ impl<'a> Token<'a> {
         )
     }
 
-    fn new_operator(operator: Operator, repr: &'a [u8], start: usize, end: usize) -> Self {
+    fn new_operator(
+        operator: Operator,
+        repr: &'a [u8],
+        start: usize,
+        end: usize,
+        line: usize,
+    ) -> Self {
         let repr = str::from_utf8(repr).unwrap();
-        Self::Operator(operator, TokenInfo::new(repr, start, end))
+        Self::Operator(operator, TokenInfo::new(repr, start, end, line))
     }
 }
 
@@ -81,16 +87,23 @@ struct TokenInfo<'a> {
     repr: &'a str,
     start: usize,
     end: usize,
+    line: usize,
 }
 
 impl<'a> TokenInfo<'a> {
-    fn new(repr: &'a str, start: usize, end: usize) -> Self {
-        Self { repr, start, end }
+    fn new(repr: &'a str, start: usize, end: usize, line: usize) -> Self {
+        Self {
+            repr,
+            start,
+            end,
+            line,
+        }
     }
 }
 
 struct Tokenizer<'a> {
     source: &'a [u8],
+    line: usize,
     position: usize,
 }
 
@@ -98,6 +111,7 @@ impl<'a> Tokenizer<'a> {
     fn new(source: &'a str) -> Self {
         Self {
             source: source.as_bytes(),
+            line: 1,
             position: 0,
         }
     }
@@ -191,6 +205,9 @@ impl<'a> Tokenizer<'a> {
     fn digest_whitespace(&mut self) {
         while let Some(ch) = self.source.get(self.position) {
             if ch.is_ascii_whitespace() {
+                if *ch == b'\n' || *ch == b'\t' || *ch == b'\r' {
+                    self.line += 1;
+                }
                 self.advance();
             } else {
                 break;
@@ -223,7 +240,12 @@ impl<'a> Tokenizer<'a> {
         match self.source.get(self.position) {
             Some(ch) if ch.is_ascii_alphabetic() || *ch == b'_' => {
                 let (start, end) = self.digest_identifier();
-                return Some(Token::new_identifier(&self.source[start..end], start, end));
+                return Some(Token::new_identifier(
+                    &self.source[start..end],
+                    start,
+                    end,
+                    self.line,
+                ));
             }
             Some(ch)
                 if *ch == b'#'
@@ -231,13 +253,23 @@ impl<'a> Tokenizer<'a> {
             {
                 self.advance();
                 let (start, end) = self.digest_decmial_number();
-                return Some(Token::new_number(&self.source[start..end], start, end));
+                return Some(Token::new_number(
+                    &self.source[start..end],
+                    start,
+                    end,
+                    self.line,
+                ));
             }
             Some(ch) if *ch == b'$' && Tokenizer::is_hexadecimal(*self.peek().unwrap()) => {
                 self.advance();
 
                 let (start, end) = self.digest_hex_number();
-                return Some(Token::new_hex_number(&self.source[start..end], start, end));
+                return Some(Token::new_hex_number(
+                    &self.source[start..end],
+                    start,
+                    end,
+                    self.line,
+                ));
             }
             Some(ch) if *ch == b'%' && Tokenizer::is_binary(*self.peek().unwrap()) => {
                 self.advance();
@@ -246,6 +278,7 @@ impl<'a> Tokenizer<'a> {
                     &self.source[start..end],
                     start,
                     end,
+                    self.line,
                 ));
             }
             Some(_) => {
@@ -258,6 +291,7 @@ impl<'a> Tokenizer<'a> {
                     &self.source[start..end],
                     start,
                     end,
+                    self.line,
                 ));
             }
             _ => unreachable!(),
@@ -320,6 +354,7 @@ mod tests {
                 repr: "move",
                 start: 0,
                 end: source.len(),
+                line: 1,
             })
         );
 
@@ -339,6 +374,7 @@ mod tests {
                 repr: "_move",
                 start: 0,
                 end: source.len(),
+                line: 1,
             })
         );
 
@@ -358,6 +394,7 @@ mod tests {
                 repr: "move",
                 start: 0,
                 end: "move".len(),
+                line: 1,
             })
         );
 
@@ -369,6 +406,7 @@ mod tests {
                 repr: "dest",
                 start: "move".len() + " ".len(),
                 end: "move".len() + " ".len() + "dest".len(),
+                line: 1,
             })
         );
 
@@ -380,6 +418,7 @@ mod tests {
                 repr: "src",
                 start: "move".len() + " ".len() + "dest".len() + " ".len(),
                 end: "move".len() + " ".len() + "dest".len() + " ".len() + "src".len(),
+                line: 1,
             })
         );
 
@@ -400,6 +439,7 @@ mod tests {
                     repr: "1337",
                     start: 1,
                     end: source.len(),
+                    line: 1,
                 },
                 1337
             )
@@ -422,6 +462,7 @@ mod tests {
                     repr: "-1337",
                     start: 1,
                     end: source.len(),
+                    line: 1,
                 },
                 -1337
             )
@@ -444,6 +485,7 @@ mod tests {
                     repr: "#",
                     start: 0,
                     end: 1,
+                    line: 1,
                 }
             )
         );
@@ -456,6 +498,7 @@ mod tests {
                     repr: "%",
                     start: 1,
                     end: 2,
+                    line: 1,
                 }
             )
         );
@@ -468,6 +511,7 @@ mod tests {
                     repr: "$",
                     start: 2,
                     end: 3,
+                    line: 1,
                 }
             )
         );
@@ -480,6 +524,7 @@ mod tests {
                     repr: "(",
                     start: 3,
                     end: 4,
+                    line: 1,
                 }
             )
         );
@@ -492,6 +537,7 @@ mod tests {
                     repr: ")",
                     start: 4,
                     end: 5,
+                    line: 1,
                 }
             )
         );
@@ -504,6 +550,7 @@ mod tests {
                     repr: ",",
                     start: 5,
                     end: 6,
+                    line: 1,
                 }
             )
         );
@@ -516,6 +563,7 @@ mod tests {
                     repr: ".",
                     start: 6,
                     end: 7,
+                    line: 1,
                 }
             )
         );
@@ -528,6 +576,7 @@ mod tests {
                     repr: ":",
                     start: 7,
                     end: 8,
+                    line: 1,
                 }
             )
         );
@@ -540,6 +589,7 @@ mod tests {
                     repr: "+",
                     start: 8,
                     end: 9,
+                    line: 1,
                 }
             )
         );
@@ -552,6 +602,7 @@ mod tests {
                     repr: "-",
                     start: 9,
                     end: 10,
+                    line: 1,
                 }
             )
         );
@@ -582,6 +633,7 @@ mod tests {
                     repr: "65BBCCDD",
                     start: 1,
                     end: source.len(),
+                    line: 1,
                 },
                 1706806493
             )
@@ -602,6 +654,7 @@ mod tests {
                     repr: "10110000",
                     start: 1,
                     end: source.len(),
+                    line: 1,
                 },
                 176
             )
@@ -625,7 +678,8 @@ mod tests {
             Token::Identifier(TokenInfo {
                 repr: "move",
                 start: 0,
-                end: "move".len()
+                end: "move".len(),
+                line: 1,
             })
         );
 
@@ -637,6 +691,7 @@ mod tests {
                     repr: ".",
                     start: "move".len(),
                     end: "move".len() + ".".len(),
+                    line: 1,
                 }
             )
         );
@@ -647,6 +702,7 @@ mod tests {
                 repr: "dw",
                 start: "move".len() + ".".len(),
                 end: "move".len() + ".".len() + "dw".len(),
+                line: 1,
             })
         );
 
@@ -656,6 +712,7 @@ mod tests {
                 repr: "D0",
                 start: "move".len() + ".".len() + "dw".len() + " ".len(),
                 end: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len(),
+                line: 1,
             })
         );
 
@@ -667,6 +724,7 @@ mod tests {
                     repr: ",",
                     start: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len(),
                     end: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len() + ",".len(),
+                    line: 1,
                 }
             )
         );
@@ -684,9 +742,40 @@ mod tests {
                     + "D0".len()
                     + ",".len()
                     + "A5".len(),
+                line: 1,
             })
         );
 
         assert_eq!(tokenizer.next(), None);
+    }
+
+    #[test]
+    fn test_line_numbers() {
+        let source = "hello\nworld";
+
+        let mut tokenizer = Tokenizer::new(source);
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Identifier(TokenInfo {
+                repr: "hello",
+                start: 0,
+                end: "hello".len(),
+                line: 1,
+            })
+        );
+
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Identifier(TokenInfo {
+                repr: "world",
+                start: "hello".len() + "\n".len(),
+                end: "hello".len() + "\n".len() + "world".len(),
+                line: 2,
+            })
+        )
     }
 }
