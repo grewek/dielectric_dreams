@@ -18,8 +18,16 @@ enum Operator {
 }
 
 #[derive(Debug, Eq, PartialEq)]
+enum Mnemoics {
+    Move,
+    Lea,
+    //TODO: More follows :)
+}
+
+#[derive(Debug, Eq, PartialEq)]
 enum Token<'a> {
     Identifier(TokenInfo<'a>),
+    Keyword(Mnemoics, TokenInfo<'a>),
     DecimalNumber(TokenInfo<'a>, i32),
     HexNumber(TokenInfo<'a>, u32),
     BinaryNumber(TokenInfo<'a>, u32),
@@ -28,7 +36,21 @@ enum Token<'a> {
 
 impl<'a> Token<'a> {
     fn new_identifier(repr: &'a [u8], start: usize, end: usize, line: usize) -> Self {
-        let repr = str::from_utf8(repr).unwrap();
+        //NOTE: I will __not__ implement string interning yet...as i just started a course
+        //      on performance oriented programming and i want to get better at profiling stuff
+        //      i should really stay away from doing any optimization...
+        let repr: &str = str::from_utf8(repr).unwrap();
+
+        let mnemomic = match repr {
+            "move" => Some(Mnemoics::Move),
+            "lea" => Some(Mnemoics::Lea),
+            _ => None,
+        };
+
+        if let Some(keyword) = mnemomic {
+            return Self::Keyword(keyword, TokenInfo::new(repr, start, end, line));
+        }
+
         Self::Identifier(TokenInfo::new(repr, start, end, line))
     }
 
