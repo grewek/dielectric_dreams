@@ -19,9 +19,46 @@ enum Operator {
 
 #[derive(Debug, Eq, PartialEq)]
 enum Mnemoics {
+    //Keywords
     Move,
     Lea,
-    //TODO: More follows :)
+    //Opcode Size
+    Byte,
+    Word,
+    Dword,
+    //Registers
+    D0,
+    D1,
+    D2,
+    D3,
+    D4,
+    D5,
+    D6,
+    D7,
+    D8,
+    D9,
+    D10,
+    D11,
+    D12,
+    D13,
+    D14,
+    D15,
+    A0,
+    A1,
+    A2,
+    A3,
+    A4,
+    A5,
+    A6,
+    A7,
+    A8,
+    A9,
+    A10,
+    A11,
+    A12,
+    A13,
+    A14,
+    A15,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -40,10 +77,49 @@ impl<'a> Token<'a> {
         //      on performance oriented programming and i want to get better at profiling stuff
         //      i should really stay away from doing any optimization...
         let repr: &str = str::from_utf8(repr).unwrap();
+        let possible_keyword = repr.to_lowercase();
 
-        let mnemomic = match repr {
+        let mnemomic = match possible_keyword.as_str() {
             "move" => Some(Mnemoics::Move),
             "lea" => Some(Mnemoics::Lea),
+            "b" => Some(Mnemoics::Byte),
+            "w" => Some(Mnemoics::Word),
+            "dw" => Some(Mnemoics::Dword),
+
+            "d0" => Some(Mnemoics::D0),
+            "d1" => Some(Mnemoics::D1),
+            "d2" => Some(Mnemoics::D2),
+            "d3" => Some(Mnemoics::D3),
+            "d4" => Some(Mnemoics::D4),
+            "d5" => Some(Mnemoics::D5),
+            "d6" => Some(Mnemoics::D6),
+            "d7" => Some(Mnemoics::D7),
+            "d8" => Some(Mnemoics::D8),
+            "d9" => Some(Mnemoics::D9),
+            "d10" => Some(Mnemoics::D10),
+            "d11" => Some(Mnemoics::D11),
+            "d12" => Some(Mnemoics::D12),
+            "d13" => Some(Mnemoics::D13),
+            "d14" => Some(Mnemoics::D14),
+            "d15" => Some(Mnemoics::D15),
+
+            "a0" => Some(Mnemoics::A0),
+            "a1" => Some(Mnemoics::A1),
+            "a2" => Some(Mnemoics::A2),
+            "a3" => Some(Mnemoics::A3),
+            "a4" => Some(Mnemoics::A4),
+            "a5" => Some(Mnemoics::A5),
+            "a6" => Some(Mnemoics::A6),
+            "a7" => Some(Mnemoics::A7),
+            "a8" => Some(Mnemoics::A8),
+            "a9" => Some(Mnemoics::A9),
+            "a10" => Some(Mnemoics::A10),
+            "a11" => Some(Mnemoics::A11),
+            "a12" => Some(Mnemoics::A12),
+            "a13" => Some(Mnemoics::A13),
+            "a14" => Some(Mnemoics::A14),
+            "a15" => Some(Mnemoics::A15),
+
             _ => None,
         };
 
@@ -729,22 +805,28 @@ mod tests {
 
         assert_eq!(
             size_token.unwrap(),
-            Token::Identifier(TokenInfo {
-                repr: "dw",
-                start: "move".len() + ".".len(),
-                end: "move".len() + ".".len() + "dw".len(),
-                line: 1,
-            })
+            Token::Keyword(
+                Mnemoics::Dword,
+                TokenInfo {
+                    repr: "dw",
+                    start: "move".len() + ".".len(),
+                    end: "move".len() + ".".len() + "dw".len(),
+                    line: 1,
+                }
+            )
         );
 
         assert_eq!(
             dest_token.unwrap(),
-            Token::Identifier(TokenInfo {
-                repr: "D0",
-                start: "move".len() + ".".len() + "dw".len() + " ".len(),
-                end: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len(),
-                line: 1,
-            })
+            Token::Keyword(
+                Mnemoics::D0,
+                TokenInfo {
+                    repr: "D0",
+                    start: "move".len() + ".".len() + "dw".len() + " ".len(),
+                    end: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len(),
+                    line: 1,
+                }
+            )
         );
 
         assert_eq!(
@@ -762,19 +844,27 @@ mod tests {
 
         assert_eq!(
             source_token.unwrap(),
-            Token::Identifier(TokenInfo {
-                repr: "A5",
-                start: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len() + ",".len(),
-                //Baaahhh thats disgusting... Okay i think we are ready to refactor the tests...
-                end: "move".len()
-                    + ".".len()
-                    + "dw".len()
-                    + " ".len()
-                    + "D0".len()
-                    + ",".len()
-                    + "A5".len(),
-                line: 1,
-            })
+            Token::Keyword(
+                Mnemoics::A5,
+                TokenInfo {
+                    repr: "A5",
+                    start: "move".len()
+                        + ".".len()
+                        + "dw".len()
+                        + " ".len()
+                        + "D0".len()
+                        + ",".len(),
+                    //Baaahhh thats disgusting... Okay i think we are ready to refactor the tests...
+                    end: "move".len()
+                        + ".".len()
+                        + "dw".len()
+                        + " ".len()
+                        + "D0".len()
+                        + ",".len()
+                        + "A5".len(),
+                    line: 1,
+                }
+            )
         );
 
         assert_eq!(tokenizer.next(), None);
