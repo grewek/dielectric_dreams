@@ -372,12 +372,15 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::Identifier(TokenInfo {
-                repr: "move",
-                start: 0,
-                end: source.len(),
-                line: 1,
-            })
+            Token::Keyword(
+                Mnemoics::Move,
+                TokenInfo {
+                    repr: "move",
+                    start: 0,
+                    end: source.len(),
+                    line: 1,
+                }
+            )
         );
 
         assert_eq!(tokenizer.position, source.len());
@@ -412,12 +415,15 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::Identifier(TokenInfo {
-                repr: "move",
-                start: 0,
-                end: "move".len(),
-                line: 1,
-            })
+            Token::Keyword(
+                Mnemoics::Move,
+                TokenInfo {
+                    repr: "move",
+                    start: 0,
+                    end: "move".len(),
+                    line: 1,
+                }
+            )
         );
 
         let token = tokenizer.next();
@@ -697,12 +703,15 @@ mod tests {
 
         assert_eq!(
             opcode_token.unwrap(),
-            Token::Identifier(TokenInfo {
-                repr: "move",
-                start: 0,
-                end: "move".len(),
-                line: 1,
-            })
+            Token::Keyword(
+                Mnemoics::Move,
+                TokenInfo {
+                    repr: "move",
+                    start: 0,
+                    end: "move".len(),
+                    line: 1,
+                }
+            )
         );
 
         assert_eq!(
