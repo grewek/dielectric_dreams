@@ -900,4 +900,114 @@ mod tests {
             })
         )
     }
+
+    #[test]
+    fn test_move_immediate_value() {
+        let source = "move.dw A0, #123456";
+
+        let mut tokenizer = Tokenizer::new(source);
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Keyword(
+                Mnemoics::Move,
+                TokenInfo {
+                    repr: "move",
+                    start: 0,
+                    end: "move".len(),
+                    line: 1
+                }
+            )
+        );
+
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Operator(
+                Operator::Dot,
+                TokenInfo {
+                    repr: ".",
+                    start: "move".len(),
+                    end: "move".len() + ".".len(),
+                    line: 1
+                }
+            )
+        );
+
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Keyword(
+                Mnemoics::Dword,
+                TokenInfo {
+                    repr: "dw",
+                    start: "move".len() + ".".len(),
+                    end: "move".len() + ".".len() + "dw".len(),
+                    line: 1,
+                }
+            )
+        );
+
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Keyword(
+                Mnemoics::A0,
+                TokenInfo {
+                    repr: "A0",
+                    start: "move".len() + ".".len() + "dw".len() + " ".len(),
+                    end: "move".len() + ".".len() + "dw".len() + " ".len() + "A0".len(),
+                    line: 1
+                }
+            )
+        );
+
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::Operator(
+                Operator::Comma,
+                TokenInfo {
+                    repr: ",",
+                    start: "move".len() + ".".len() + "dw".len() + " ".len() + "A0".len(),
+                    end: "move".len() + ".".len() + "dw".len() + " ".len() + "A0".len() + ",".len(),
+                    line: 1,
+                }
+            )
+        );
+
+        let token = tokenizer.next();
+
+        assert_eq!(
+            token.unwrap(),
+            Token::DecimalNumber(
+                TokenInfo {
+                    repr: "123456",
+                    start: "move".len()
+                        + ".".len()
+                        + "dw".len()
+                        + " ".len()
+                        + "A0".len()
+                        + ",".len()
+                        + " ".len()
+                        + "#".len(),
+                    end: "move".len()
+                        + ".".len()
+                        + "dw".len()
+                        + " ".len()
+                        + "A0".len()
+                        + ",".len()
+                        + " ".len()
+                        + "#123456".len(),
+                    line: 1
+                },
+                123456
+            )
+        )
+    }
 }
