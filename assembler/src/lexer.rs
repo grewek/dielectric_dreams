@@ -4,29 +4,18 @@ use std::str;
 //      - Refactor the lexer into it's own file
 //      - remove the last unwraps!
 //      - add more tests for possible opcodes like addressing modes and immediate values!
-#[derive(Debug, Eq, PartialEq)]
-enum Operator {
-    PoundSign,
-    Percent,
-    DollarSign,
-    OpenParen,
-    CloseParen,
-    Comma,
-    Dot,
-    Colon,
-    Plus,
-    Minus,
-}
-
-#[derive(Debug, Eq, PartialEq)]
-enum Mnemoics {
+#[derive(Debug, PartialEq, Eq)]
+enum TokenType {
+    //Identifiers
+    Identifier,
     //Keywords
     Move,
     Lea,
-    //Opcode Size
+
     Byte,
     Word,
     Dword,
+
     //Registers
     D0,
     D1,
@@ -60,16 +49,32 @@ enum Mnemoics {
     A13,
     A14,
     A15,
+
+    // Number Types
+    HexNumber(u32),
+    DecimalNumber(i32),
+    BinaryNumber(u32),
+
+    //Operators
+    PoundSign,
+    Percent,
+    DollarSign,
+    OpenParen,
+    CloseParen,
+    Comma,
+    Dot,
+    Colon,
+    Plus,
+    Minus,
 }
 
 #[derive(Debug, Eq, PartialEq)]
-enum Token<'a> {
-    Identifier(TokenInfo<'a>),
-    Keyword(Mnemoics, TokenInfo<'a>),
-    DecimalNumber(TokenInfo<'a>, i32),
-    HexNumber(TokenInfo<'a>, u32),
-    BinaryNumber(TokenInfo<'a>, u32),
-    Operator(Operator, TokenInfo<'a>),
+struct Token<'a> {
+    token_type: TokenType,
+    repr: &'a str,
+    start: usize,
+    end: usize,
+    line: usize,
 }
 
 impl<'a> Token<'a> {
@@ -80,118 +85,122 @@ impl<'a> Token<'a> {
         let repr: &str = str::from_utf8(repr).unwrap();
         let possible_keyword = repr.to_lowercase();
 
-        let mnemomic = match possible_keyword.as_str() {
-            "move" => Some(Mnemoics::Move),
-            "lea" => Some(Mnemoics::Lea),
-            "b" => Some(Mnemoics::Byte),
-            "w" => Some(Mnemoics::Word),
-            "dw" => Some(Mnemoics::Dword),
+        let token_type = match possible_keyword.as_str() {
+            "move" => TokenType::Move,
+            "lea" => TokenType::Lea,
+            "b" => TokenType::Byte,
+            "w" => TokenType::Word,
+            "dw" => TokenType::Dword,
 
-            "d0" => Some(Mnemoics::D0),
-            "d1" => Some(Mnemoics::D1),
-            "d2" => Some(Mnemoics::D2),
-            "d3" => Some(Mnemoics::D3),
-            "d4" => Some(Mnemoics::D4),
-            "d5" => Some(Mnemoics::D5),
-            "d6" => Some(Mnemoics::D6),
-            "d7" => Some(Mnemoics::D7),
-            "d8" => Some(Mnemoics::D8),
-            "d9" => Some(Mnemoics::D9),
-            "d10" => Some(Mnemoics::D10),
-            "d11" => Some(Mnemoics::D11),
-            "d12" => Some(Mnemoics::D12),
-            "d13" => Some(Mnemoics::D13),
-            "d14" => Some(Mnemoics::D14),
-            "d15" => Some(Mnemoics::D15),
+            "d0" => TokenType::D0,
+            "d1" => TokenType::D1,
+            "d2" => TokenType::D2,
+            "d3" => TokenType::D3,
+            "d4" => TokenType::D4,
+            "d5" => TokenType::D5,
+            "d6" => TokenType::D6,
+            "d7" => TokenType::D7,
+            "d8" => TokenType::D8,
+            "d9" => TokenType::D9,
+            "d10" => TokenType::D10,
+            "d11" => TokenType::D11,
+            "d12" => TokenType::D12,
+            "d13" => TokenType::D13,
+            "d14" => TokenType::D14,
+            "d15" => TokenType::D15,
 
-            "a0" => Some(Mnemoics::A0),
-            "a1" => Some(Mnemoics::A1),
-            "a2" => Some(Mnemoics::A2),
-            "a3" => Some(Mnemoics::A3),
-            "a4" => Some(Mnemoics::A4),
-            "a5" => Some(Mnemoics::A5),
-            "a6" => Some(Mnemoics::A6),
-            "a7" => Some(Mnemoics::A7),
-            "a8" => Some(Mnemoics::A8),
-            "a9" => Some(Mnemoics::A9),
-            "a10" => Some(Mnemoics::A10),
-            "a11" => Some(Mnemoics::A11),
-            "a12" => Some(Mnemoics::A12),
-            "a13" => Some(Mnemoics::A13),
-            "a14" => Some(Mnemoics::A14),
-            "a15" => Some(Mnemoics::A15),
+            "a0" => TokenType::A0,
+            "a1" => TokenType::A1,
+            "a2" => TokenType::A2,
+            "a3" => TokenType::A3,
+            "a4" => TokenType::A4,
+            "a5" => TokenType::A5,
+            "a6" => TokenType::A6,
+            "a7" => TokenType::A7,
+            "a8" => TokenType::A8,
+            "a9" => TokenType::A9,
+            "a10" => TokenType::A10,
+            "a11" => TokenType::A11,
+            "a12" => TokenType::A12,
+            "a13" => TokenType::A13,
+            "a14" => TokenType::A14,
+            "a15" => TokenType::A15,
 
-            _ => None,
+            _ => TokenType::Identifier,
         };
 
-        if let Some(keyword) = mnemomic {
-            return Self::Keyword(keyword, TokenInfo::new(repr, start, end, line));
+        Self {
+            token_type,
+            repr,
+            start,
+            end,
+            line,
         }
-
-        Self::Identifier(TokenInfo::new(repr, start, end, line))
     }
 
     fn new_number(repr: &'a [u8], start: usize, end: usize, line: usize) -> Self {
         //NOTE: Due to the way we parse numbers i am pretty sure that i can just unwrap here! and do not need to
         //      care about the error state! But i might be wrong so lets add a panic in case anything goes haywire...
         let repr = str::from_utf8(repr).unwrap();
-        Self::DecimalNumber(
-            TokenInfo::new(repr, start, end, line),
-            repr.parse().unwrap_or_else(|_| {
-                panic!("ERROR: Scanned Item was apparently not a value {}", repr)
-            }),
-        )
+        let value = repr
+            .parse()
+            .unwrap_or_else(|_| panic!("ERROR: Scanned Item was apparently not a value {}", repr));
+
+        Self {
+            token_type: TokenType::DecimalNumber(value),
+            repr,
+            start,
+            end,
+            line,
+        }
     }
 
     fn new_binary_number(repr: &'a [u8], start: usize, end: usize, line: usize) -> Self {
         let repr = str::from_utf8(repr).unwrap();
+        let value = u32::from_str_radix(repr, 2).unwrap_or_else(|_| {
+            panic!(
+                "Error: Scanned item could not be converted into a hexadecimal value: {}",
+                repr
+            )
+        });
 
-        Self::BinaryNumber(
-            TokenInfo::new(repr, start, end, line),
-            u32::from_str_radix(repr, 2).unwrap_or_else(|_| {
-                panic!(
-                    "Error: Scanned item could not be converted into a hexadecimal value: {}",
-                    repr
-                )
-            }),
-        )
+        Self {
+            token_type: TokenType::BinaryNumber(value),
+            repr,
+            start,
+            end,
+            line,
+        }
     }
     fn new_hex_number(repr: &'a [u8], start: usize, end: usize, line: usize) -> Self {
         let repr = str::from_utf8(repr).unwrap();
-        Self::HexNumber(
-            TokenInfo::new(repr, start, end, line),
-            u32::from_str_radix(repr, 16).unwrap_or_else(|_| {
-                panic!(
-                    "Error: Scanned Item could not be converted into a hexadecimal value: {}",
-                    repr
-                );
-            }),
-        )
+        let value = u32::from_str_radix(repr, 16).unwrap_or_else(|_| {
+            panic!(
+                "Error: Scanned Item could not be converted into a hexadecimal value: {}",
+                repr
+            );
+        });
+
+        Self {
+            token_type: TokenType::HexNumber(value),
+            repr,
+            start,
+            end,
+            line,
+        }
     }
 
     fn new_operator(
-        operator: Operator,
+        operator: TokenType,
         repr: &'a [u8],
         start: usize,
         end: usize,
         line: usize,
     ) -> Self {
         let repr = str::from_utf8(repr).unwrap();
-        Self::Operator(operator, TokenInfo::new(repr, start, end, line))
-    }
-}
 
-#[derive(Debug, Eq, PartialEq)]
-struct TokenInfo<'a> {
-    repr: &'a str,
-    start: usize,
-    end: usize,
-    line: usize,
-}
-
-impl<'a> TokenInfo<'a> {
-    fn new(repr: &'a str, start: usize, end: usize, line: usize) -> Self {
         Self {
+            token_type: operator,
             repr,
             start,
             end,
@@ -277,21 +286,21 @@ impl<'a> Tokenizer<'a> {
         (start, self.position)
     }
 
-    fn digest_operator(&mut self) -> (Operator, usize, usize) {
+    fn digest_operator(&mut self) -> (TokenType, usize, usize) {
         let start = self.position;
 
         //TODO(Kay): From?
         let operator = match self.source.get(self.position) {
-            Some(b'#') => Operator::PoundSign,
-            Some(b'%') => Operator::Percent,
-            Some(b'$') => Operator::DollarSign,
-            Some(b'(') => Operator::OpenParen,
-            Some(b')') => Operator::CloseParen,
-            Some(b',') => Operator::Comma,
-            Some(b'.') => Operator::Dot,
-            Some(b':') => Operator::Colon,
-            Some(b'+') => Operator::Plus,
-            Some(b'-') => Operator::Minus,
+            Some(b'#') => TokenType::PoundSign,
+            Some(b'%') => TokenType::Percent,
+            Some(b'$') => TokenType::DollarSign,
+            Some(b'(') => TokenType::OpenParen,
+            Some(b')') => TokenType::CloseParen,
+            Some(b',') => TokenType::Comma,
+            Some(b'.') => TokenType::Dot,
+            Some(b':') => TokenType::Colon,
+            Some(b'+') => TokenType::Plus,
+            Some(b'-') => TokenType::Minus,
             Some(ch) => todo!("Reached a {}", ch),
             None => unreachable!(),
         };
@@ -449,15 +458,13 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::Keyword(
-                Mnemoics::Move,
-                TokenInfo {
-                    repr: "move",
-                    start: 0,
-                    end: source.len(),
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Move,
+                repr: "move",
+                start: 0,
+                end: source.len(),
+                line: 1,
+            }
         );
 
         assert_eq!(tokenizer.position, source.len());
@@ -472,12 +479,13 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::Identifier(TokenInfo {
+            Token {
+                token_type: TokenType::Identifier,
                 repr: "_move",
                 start: 0,
                 end: source.len(),
                 line: 1,
-            })
+            }
         );
 
         assert_eq!(tokenizer.position, source.len());
@@ -492,39 +500,39 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::Keyword(
-                Mnemoics::Move,
-                TokenInfo {
-                    repr: "move",
-                    start: 0,
-                    end: "move".len(),
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Move,
+                repr: "move",
+                start: 0,
+                end: "move".len(),
+                line: 1,
+            }
         );
 
         let token = tokenizer.next();
 
         assert_eq!(
             token.unwrap(),
-            Token::Identifier(TokenInfo {
+            Token {
+                token_type: TokenType::Identifier,
                 repr: "dest",
                 start: "move".len() + " ".len(),
                 end: "move".len() + " ".len() + "dest".len(),
                 line: 1,
-            })
+            }
         );
 
         let token = tokenizer.next();
 
         assert_eq!(
             token.unwrap(),
-            Token::Identifier(TokenInfo {
+            Token {
+                token_type: TokenType::Identifier,
                 repr: "src",
                 start: "move".len() + " ".len() + "dest".len() + " ".len(),
                 end: "move".len() + " ".len() + "dest".len() + " ".len() + "src".len(),
                 line: 1,
-            })
+            }
         );
 
         assert_eq!(tokenizer.position, source.len());
@@ -539,15 +547,13 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::DecimalNumber(
-                TokenInfo {
-                    repr: "1337",
-                    start: 1,
-                    end: source.len(),
-                    line: 1,
-                },
-                1337
-            )
+            Token {
+                token_type: TokenType::DecimalNumber(1337),
+                repr: "1337",
+                start: 1,
+                end: source.len(),
+                line: 1,
+            }
         );
 
         assert_eq!(tokenizer.position, source.len());
@@ -562,15 +568,13 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::DecimalNumber(
-                TokenInfo {
-                    repr: "-1337",
-                    start: 1,
-                    end: source.len(),
-                    line: 1,
-                },
-                -1337
-            )
+            Token {
+                token_type: TokenType::DecimalNumber(-1337),
+                repr: "-1337",
+                start: 1,
+                end: source.len(),
+                line: 1,
+            }
         );
 
         assert_eq!(tokenizer.position, source.len());
@@ -584,132 +588,112 @@ mod tests {
 
         assert_eq!(
             tokenizer.next().unwrap(),
-            Token::Operator(
-                Operator::PoundSign,
-                TokenInfo {
-                    repr: "#",
-                    start: 0,
-                    end: 1,
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::PoundSign,
+                repr: "#",
+                start: 0,
+                end: 1,
+                line: 1,
+            }
         );
 
         assert_eq!(
             tokenizer.next().unwrap(),
-            Token::Operator(
-                Operator::Percent,
-                TokenInfo {
-                    repr: "%",
-                    start: 1,
-                    end: 2,
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Percent,
+                repr: "%",
+                start: 1,
+                end: 2,
+                line: 1,
+            }
         );
 
         assert_eq!(
             tokenizer.next().unwrap(),
-            Token::Operator(
-                Operator::DollarSign,
-                TokenInfo {
-                    repr: "$",
-                    start: 2,
-                    end: 3,
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::DollarSign,
+                repr: "$",
+                start: 2,
+                end: 3,
+                line: 1,
+            }
         );
 
         assert_eq!(
             tokenizer.next().unwrap(),
-            Token::Operator(
-                Operator::OpenParen,
-                TokenInfo {
-                    repr: "(",
-                    start: 3,
-                    end: 4,
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::OpenParen,
+                repr: "(",
+                start: 3,
+                end: 4,
+                line: 1,
+            }
         );
 
         assert_eq!(
             tokenizer.next().unwrap(),
-            Token::Operator(
-                Operator::CloseParen,
-                TokenInfo {
-                    repr: ")",
-                    start: 4,
-                    end: 5,
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::CloseParen,
+                repr: ")",
+                start: 4,
+                end: 5,
+                line: 1,
+            }
         );
 
         assert_eq!(
             tokenizer.next().unwrap(),
-            Token::Operator(
-                Operator::Comma,
-                TokenInfo {
-                    repr: ",",
-                    start: 5,
-                    end: 6,
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Comma,
+                repr: ",",
+                start: 5,
+                end: 6,
+                line: 1,
+            }
         );
 
         assert_eq!(
             tokenizer.next().unwrap(),
-            Token::Operator(
-                Operator::Dot,
-                TokenInfo {
-                    repr: ".",
-                    start: 6,
-                    end: 7,
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Dot,
+                repr: ".",
+                start: 6,
+                end: 7,
+                line: 1,
+            }
         );
 
         assert_eq!(
             tokenizer.next().unwrap(),
-            Token::Operator(
-                Operator::Colon,
-                TokenInfo {
-                    repr: ":",
-                    start: 7,
-                    end: 8,
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Colon,
+                repr: ":",
+                start: 7,
+                end: 8,
+                line: 1,
+            }
         );
 
         assert_eq!(
             tokenizer.next().unwrap(),
-            Token::Operator(
-                Operator::Plus,
-                TokenInfo {
-                    repr: "+",
-                    start: 8,
-                    end: 9,
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Plus,
+                repr: "+",
+                start: 8,
+                end: 9,
+                line: 1,
+            }
         );
 
         assert_eq!(
             tokenizer.next().unwrap(),
-            Token::Operator(
-                Operator::Minus,
-                TokenInfo {
-                    repr: "-",
-                    start: 9,
-                    end: 10,
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Minus,
+                repr: "-",
+                start: 9,
+                end: 10,
+                line: 1,
+            }
         );
     }
 
@@ -733,15 +717,13 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::HexNumber(
-                TokenInfo {
-                    repr: "65BBCCDD",
-                    start: 1,
-                    end: source.len(),
-                    line: 1,
-                },
-                1706806493
-            )
+            Token {
+                token_type: TokenType::HexNumber(1706806493),
+                repr: "65BBCCDD",
+                start: 1,
+                end: source.len(),
+                line: 1,
+            }
         );
     }
 
@@ -754,15 +736,13 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::BinaryNumber(
-                TokenInfo {
-                    repr: "10110000",
-                    start: 1,
-                    end: source.len(),
-                    line: 1,
-                },
-                176
-            )
+            Token {
+                token_type: TokenType::BinaryNumber(176),
+                repr: "10110000",
+                start: 1,
+                end: source.len(),
+                line: 1,
+            }
         );
     }
 
@@ -780,92 +760,75 @@ mod tests {
 
         assert_eq!(
             opcode_token.unwrap(),
-            Token::Keyword(
-                Mnemoics::Move,
-                TokenInfo {
-                    repr: "move",
-                    start: 0,
-                    end: "move".len(),
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Move,
+                repr: "move",
+                start: 0,
+                end: "move".len(),
+                line: 1,
+            }
         );
 
         assert_eq!(
             dot_token.unwrap(),
-            Token::Operator(
-                Operator::Dot,
-                TokenInfo {
-                    repr: ".",
-                    start: "move".len(),
-                    end: "move".len() + ".".len(),
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Dot,
+                repr: ".",
+                start: "move".len(),
+                end: "move".len() + ".".len(),
+                line: 1,
+            }
         );
 
         assert_eq!(
             size_token.unwrap(),
-            Token::Keyword(
-                Mnemoics::Dword,
-                TokenInfo {
-                    repr: "dw",
-                    start: "move".len() + ".".len(),
-                    end: "move".len() + ".".len() + "dw".len(),
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Dword,
+                repr: "dw",
+                start: "move".len() + ".".len(),
+                end: "move".len() + ".".len() + "dw".len(),
+                line: 1,
+            }
         );
 
         assert_eq!(
             dest_token.unwrap(),
-            Token::Keyword(
-                Mnemoics::D0,
-                TokenInfo {
-                    repr: "D0",
-                    start: "move".len() + ".".len() + "dw".len() + " ".len(),
-                    end: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len(),
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::D0,
+                repr: "D0",
+                start: "move".len() + ".".len() + "dw".len() + " ".len(),
+                end: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len(),
+                line: 1,
+            }
         );
 
         assert_eq!(
             comma_token.unwrap(),
-            Token::Operator(
-                Operator::Comma,
-                TokenInfo {
-                    repr: ",",
-                    start: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len(),
-                    end: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len() + ",".len(),
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Comma,
+                repr: ",",
+                start: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len(),
+                end: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len() + ",".len(),
+                line: 1,
+            }
         );
 
         assert_eq!(
             source_token.unwrap(),
-            Token::Keyword(
-                Mnemoics::A5,
-                TokenInfo {
-                    repr: "A5",
-                    start: "move".len()
-                        + ".".len()
-                        + "dw".len()
-                        + " ".len()
-                        + "D0".len()
-                        + ",".len(),
-                    //Baaahhh thats disgusting... Okay i think we are ready to refactor the tests...
-                    end: "move".len()
-                        + ".".len()
-                        + "dw".len()
-                        + " ".len()
-                        + "D0".len()
-                        + ",".len()
-                        + "A5".len(),
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::A5,
+                repr: "A5",
+                start: "move".len() + ".".len() + "dw".len() + " ".len() + "D0".len() + ",".len(),
+                //Baaahhh thats disgusting... Okay i think we are ready to refactor the tests...
+                end: "move".len()
+                    + ".".len()
+                    + "dw".len()
+                    + " ".len()
+                    + "D0".len()
+                    + ",".len()
+                    + "A5".len(),
+                line: 1,
+            }
         );
 
         assert_eq!(tokenizer.next(), None);
@@ -880,24 +843,26 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::Identifier(TokenInfo {
+            Token {
+                token_type: TokenType::Identifier,
                 repr: "hello",
                 start: 0,
                 end: "hello".len(),
                 line: 1,
-            })
+            }
         );
 
         let token = tokenizer.next();
 
         assert_eq!(
             token.unwrap(),
-            Token::Identifier(TokenInfo {
+            Token {
+                token_type: TokenType::Identifier,
                 repr: "world",
                 start: "hello".len() + "\n".len(),
                 end: "hello".len() + "\n".len() + "world".len(),
                 line: 2,
-            })
+            }
         )
     }
 
@@ -910,104 +875,92 @@ mod tests {
 
         assert_eq!(
             token.unwrap(),
-            Token::Keyword(
-                Mnemoics::Move,
-                TokenInfo {
-                    repr: "move",
-                    start: 0,
-                    end: "move".len(),
-                    line: 1
-                }
-            )
+            Token {
+                token_type: TokenType::Move,
+                repr: "move",
+                start: 0,
+                end: "move".len(),
+                line: 1
+            }
         );
 
         let token = tokenizer.next();
 
         assert_eq!(
             token.unwrap(),
-            Token::Operator(
-                Operator::Dot,
-                TokenInfo {
-                    repr: ".",
-                    start: "move".len(),
-                    end: "move".len() + ".".len(),
-                    line: 1
-                }
-            )
+            Token {
+                token_type: TokenType::Dot,
+                repr: ".",
+                start: "move".len(),
+                end: "move".len() + ".".len(),
+                line: 1
+            }
         );
 
         let token = tokenizer.next();
 
         assert_eq!(
             token.unwrap(),
-            Token::Keyword(
-                Mnemoics::Dword,
-                TokenInfo {
-                    repr: "dw",
-                    start: "move".len() + ".".len(),
-                    end: "move".len() + ".".len() + "dw".len(),
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Dword,
+                repr: "dw",
+                start: "move".len() + ".".len(),
+                end: "move".len() + ".".len() + "dw".len(),
+                line: 1,
+            }
         );
 
         let token = tokenizer.next();
 
         assert_eq!(
             token.unwrap(),
-            Token::Keyword(
-                Mnemoics::A0,
-                TokenInfo {
-                    repr: "A0",
-                    start: "move".len() + ".".len() + "dw".len() + " ".len(),
-                    end: "move".len() + ".".len() + "dw".len() + " ".len() + "A0".len(),
-                    line: 1
-                }
-            )
+            Token {
+                token_type: TokenType::A0,
+                repr: "A0",
+                start: "move".len() + ".".len() + "dw".len() + " ".len(),
+                end: "move".len() + ".".len() + "dw".len() + " ".len() + "A0".len(),
+                line: 1
+            }
         );
 
         let token = tokenizer.next();
 
         assert_eq!(
             token.unwrap(),
-            Token::Operator(
-                Operator::Comma,
-                TokenInfo {
-                    repr: ",",
-                    start: "move".len() + ".".len() + "dw".len() + " ".len() + "A0".len(),
-                    end: "move".len() + ".".len() + "dw".len() + " ".len() + "A0".len() + ",".len(),
-                    line: 1,
-                }
-            )
+            Token {
+                token_type: TokenType::Comma,
+                repr: ",",
+                start: "move".len() + ".".len() + "dw".len() + " ".len() + "A0".len(),
+                end: "move".len() + ".".len() + "dw".len() + " ".len() + "A0".len() + ",".len(),
+                line: 1,
+            }
         );
 
         let token = tokenizer.next();
 
         assert_eq!(
             token.unwrap(),
-            Token::DecimalNumber(
-                TokenInfo {
-                    repr: "123456",
-                    start: "move".len()
-                        + ".".len()
-                        + "dw".len()
-                        + " ".len()
-                        + "A0".len()
-                        + ",".len()
-                        + " ".len()
-                        + "#".len(),
-                    end: "move".len()
-                        + ".".len()
-                        + "dw".len()
-                        + " ".len()
-                        + "A0".len()
-                        + ",".len()
-                        + " ".len()
-                        + "#123456".len(),
-                    line: 1
-                },
-                123456
-            )
+            Token {
+                token_type: TokenType::DecimalNumber(123456),
+                repr: "123456",
+                start: "move".len()
+                    + ".".len()
+                    + "dw".len()
+                    + " ".len()
+                    + "A0".len()
+                    + ",".len()
+                    + " ".len()
+                    + "#".len(),
+                end: "move".len()
+                    + ".".len()
+                    + "dw".len()
+                    + " ".len()
+                    + "A0".len()
+                    + ",".len()
+                    + " ".len()
+                    + "#123456".len(),
+                line: 1
+            }
         )
     }
 }
