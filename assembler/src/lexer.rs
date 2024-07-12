@@ -4,8 +4,8 @@ use std::str;
 //      - Refactor the lexer into it's own file
 //      - remove the last unwraps!
 //      - add more tests for possible opcodes like addressing modes and immediate values!
-#[derive(Debug, PartialEq, Eq)]
-enum TokenType {
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum TokenType {
     //Identifiers
     Identifier,
     //Keywords
@@ -66,10 +66,11 @@ enum TokenType {
     Colon,
     Plus,
     Minus,
+    EndOfFile,
 }
 
-#[derive(Debug, Eq, PartialEq)]
-struct Token<'a> {
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+pub struct Token<'a> {
     token_type: TokenType,
     repr: &'a str,
     start: usize,
@@ -190,6 +191,16 @@ impl<'a> Token<'a> {
         }
     }
 
+    fn eof(start: usize, line: usize) -> Self {
+        Self {
+            token_type: TokenType::EndOfFile,
+            repr: "",
+            start,
+            end: start,
+            line,
+        }
+    }
+
     fn new_operator(
         operator: TokenType,
         repr: &'a [u8],
@@ -207,16 +218,94 @@ impl<'a> Token<'a> {
             line,
         }
     }
+
+    pub fn is_operator(&self) -> bool {
+        matches!(
+            self.token_type,
+            TokenType::PoundSign
+                | TokenType::Percent
+                | TokenType::DollarSign
+                | TokenType::OpenParen
+                | TokenType::CloseParen
+                | TokenType::Comma
+                | TokenType::Dot
+                | TokenType::Colon
+                | TokenType::Plus
+                | TokenType::Minus
+        )
+    }
+
+    pub fn token_type(&self) -> TokenType {
+        self.token_type
+    }
+
+    pub fn get_repr(&self) -> &'a str {
+        self.repr
+    }
+    pub fn is_identifier(&self) -> bool {
+        matches!(self.token_type, TokenType::Identifier)
+    }
+
+    pub fn is_keyword(&self) -> bool {
+        matches!(
+            self.token_type,
+            TokenType::Identifier
+                | TokenType::Move
+                | TokenType::Lea
+                | TokenType::Byte
+                | TokenType::Word
+                | TokenType::Dword
+                | TokenType::D0
+                | TokenType::D1
+                | TokenType::D2
+                | TokenType::D3
+                | TokenType::D4
+                | TokenType::D5
+                | TokenType::D6
+                | TokenType::D7
+                | TokenType::D8
+                | TokenType::D9
+                | TokenType::D10
+                | TokenType::D11
+                | TokenType::D12
+                | TokenType::D13
+                | TokenType::D14
+                | TokenType::D15
+                | TokenType::A0
+                | TokenType::A1
+                | TokenType::A2
+                | TokenType::A3
+                | TokenType::A4
+                | TokenType::A5
+                | TokenType::A6
+                | TokenType::A7
+                | TokenType::A8
+                | TokenType::A9
+                | TokenType::A10
+                | TokenType::A11
+                | TokenType::A12
+                | TokenType::A13
+                | TokenType::A14
+                | TokenType::A15
+        )
+    }
+
+    pub fn is_number(&self) -> bool {
+        matches!(
+            self.token_type,
+            TokenType::HexNumber(_) | TokenType::DecimalNumber(_) | TokenType::BinaryNumber(_)
+        )
+    }
 }
 
-struct Tokenizer<'a> {
+pub struct Tokenizer<'a> {
     source: &'a [u8],
     line: usize,
     position: usize,
 }
 
 impl<'a> Tokenizer<'a> {
-    fn new(source: &'a str) -> Self {
+    pub fn new(source: &'a str) -> Self {
         Self {
             source: source.as_bytes(),
             line: 1,
@@ -338,22 +427,17 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn next(&mut self) -> Option<Token<'a>> {
+    pub fn next(&mut self) -> Token<'a> {
         self.digest_whitespace();
 
         if self.position == self.source.len() {
-            return None;
+            return Token::eof(self.position, self.line);
         }
 
         match self.source.get(self.position) {
             Some(ch) if ch.is_ascii_alphabetic() || *ch == b'_' => {
                 let (start, end) = self.digest_identifier();
-                return Some(Token::new_identifier(
-                    &self.source[start..end],
-                    start,
-                    end,
-                    self.line,
-                ));
+                return Token::new_identifier(&self.source[start..end], start, end, self.line);
             }
             Some(ch)
                 if *ch == b'#'
@@ -361,49 +445,34 @@ impl<'a> Tokenizer<'a> {
             {
                 self.advance();
                 let (start, end) = self.digest_decmial_number();
-                return Some(Token::new_number(
-                    &self.source[start..end],
-                    start,
-                    end,
-                    self.line,
-                ));
+                return Token::new_number(&self.source[start..end], start, end, self.line);
             }
             Some(ch) if *ch == b'$' && Tokenizer::is_hexadecimal(*self.peek().unwrap()) => {
                 self.advance();
 
                 let (start, end) = self.digest_hex_number();
-                return Some(Token::new_hex_number(
-                    &self.source[start..end],
-                    start,
-                    end,
-                    self.line,
-                ));
+                return Token::new_hex_number(&self.source[start..end], start, end, self.line);
             }
             Some(ch) if *ch == b'%' && Tokenizer::is_binary(*self.peek().unwrap()) => {
                 self.advance();
                 let (start, end) = self.digest_binary_number();
-                return Some(Token::new_binary_number(
-                    &self.source[start..end],
-                    start,
-                    end,
-                    self.line,
-                ));
+                return Token::new_binary_number(&self.source[start..end], start, end, self.line);
             }
             Some(_) => {
                 //NOTE: Scanner is desperate it does not know what the next symbol is so it __must__
                 //      be a operator!
                 let (operator, start, end) = self.digest_operator();
 
-                return Some(Token::new_operator(
+                return Token::new_operator(
                     operator,
                     &self.source[start..end],
                     start,
                     end,
                     self.line,
-                ));
+                );
             }
             _ => unreachable!(),
-        };
+        }
     }
 }
 
@@ -418,7 +487,16 @@ mod tests {
 
         let token = tokenizer.next();
 
-        assert_eq!(token, None);
+        assert_eq!(
+            token,
+            Token {
+                token_type: TokenType::EndOfFile,
+                repr: "",
+                start: 0,
+                end: 0,
+                line: 1,
+            }
+        );
     }
 
     #[test]
@@ -428,7 +506,16 @@ mod tests {
 
         let token = tokenizer.next();
 
-        assert_eq!(token, None);
+        assert_eq!(
+            token,
+            Token {
+                token_type: TokenType::EndOfFile,
+                repr: "",
+                start: 3,
+                end: 3,
+                line: 1,
+            }
+        );
     }
 
     #[test]
@@ -445,7 +532,16 @@ mod tests {
         let mut tokenizer = Tokenizer::new(whitespace);
 
         let token = tokenizer.next();
-        assert_eq!(token, None);
+        assert_eq!(
+            token,
+            Token {
+                token_type: TokenType::EndOfFile,
+                repr: "",
+                start: 3,
+                end: 3,
+                line: 1,
+            }
+        );
         assert_eq!(tokenizer.position, whitespace.len());
     }
 
@@ -457,7 +553,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Move,
                 repr: "move",
@@ -478,7 +574,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Identifier,
                 repr: "_move",
@@ -499,7 +595,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Move,
                 repr: "move",
@@ -512,7 +608,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Identifier,
                 repr: "dest",
@@ -525,7 +621,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Identifier,
                 repr: "src",
@@ -546,7 +642,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::DecimalNumber(1337),
                 repr: "1337",
@@ -567,7 +663,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::DecimalNumber(-1337),
                 repr: "-1337",
@@ -587,7 +683,7 @@ mod tests {
         let mut tokenizer = Tokenizer::new(source);
 
         assert_eq!(
-            tokenizer.next().unwrap(),
+            tokenizer.next(),
             Token {
                 token_type: TokenType::PoundSign,
                 repr: "#",
@@ -598,7 +694,7 @@ mod tests {
         );
 
         assert_eq!(
-            tokenizer.next().unwrap(),
+            tokenizer.next(),
             Token {
                 token_type: TokenType::Percent,
                 repr: "%",
@@ -609,7 +705,7 @@ mod tests {
         );
 
         assert_eq!(
-            tokenizer.next().unwrap(),
+            tokenizer.next(),
             Token {
                 token_type: TokenType::DollarSign,
                 repr: "$",
@@ -620,7 +716,7 @@ mod tests {
         );
 
         assert_eq!(
-            tokenizer.next().unwrap(),
+            tokenizer.next(),
             Token {
                 token_type: TokenType::OpenParen,
                 repr: "(",
@@ -631,7 +727,7 @@ mod tests {
         );
 
         assert_eq!(
-            tokenizer.next().unwrap(),
+            tokenizer.next(),
             Token {
                 token_type: TokenType::CloseParen,
                 repr: ")",
@@ -642,7 +738,7 @@ mod tests {
         );
 
         assert_eq!(
-            tokenizer.next().unwrap(),
+            tokenizer.next(),
             Token {
                 token_type: TokenType::Comma,
                 repr: ",",
@@ -653,7 +749,7 @@ mod tests {
         );
 
         assert_eq!(
-            tokenizer.next().unwrap(),
+            tokenizer.next(),
             Token {
                 token_type: TokenType::Dot,
                 repr: ".",
@@ -664,7 +760,7 @@ mod tests {
         );
 
         assert_eq!(
-            tokenizer.next().unwrap(),
+            tokenizer.next(),
             Token {
                 token_type: TokenType::Colon,
                 repr: ":",
@@ -675,7 +771,7 @@ mod tests {
         );
 
         assert_eq!(
-            tokenizer.next().unwrap(),
+            tokenizer.next(),
             Token {
                 token_type: TokenType::Plus,
                 repr: "+",
@@ -686,7 +782,7 @@ mod tests {
         );
 
         assert_eq!(
-            tokenizer.next().unwrap(),
+            tokenizer.next(),
             Token {
                 token_type: TokenType::Minus,
                 repr: "-",
@@ -716,7 +812,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::HexNumber(1706806493),
                 repr: "65BBCCDD",
@@ -735,7 +831,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::BinaryNumber(176),
                 repr: "10110000",
@@ -759,7 +855,7 @@ mod tests {
         let source_token = tokenizer.next();
 
         assert_eq!(
-            opcode_token.unwrap(),
+            opcode_token,
             Token {
                 token_type: TokenType::Move,
                 repr: "move",
@@ -770,7 +866,7 @@ mod tests {
         );
 
         assert_eq!(
-            dot_token.unwrap(),
+            dot_token,
             Token {
                 token_type: TokenType::Dot,
                 repr: ".",
@@ -781,7 +877,7 @@ mod tests {
         );
 
         assert_eq!(
-            size_token.unwrap(),
+            size_token,
             Token {
                 token_type: TokenType::Dword,
                 repr: "dw",
@@ -792,7 +888,7 @@ mod tests {
         );
 
         assert_eq!(
-            dest_token.unwrap(),
+            dest_token,
             Token {
                 token_type: TokenType::D0,
                 repr: "D0",
@@ -803,7 +899,7 @@ mod tests {
         );
 
         assert_eq!(
-            comma_token.unwrap(),
+            comma_token,
             Token {
                 token_type: TokenType::Comma,
                 repr: ",",
@@ -814,7 +910,7 @@ mod tests {
         );
 
         assert_eq!(
-            source_token.unwrap(),
+            source_token,
             Token {
                 token_type: TokenType::A5,
                 repr: "A5",
@@ -831,7 +927,28 @@ mod tests {
             }
         );
 
-        assert_eq!(tokenizer.next(), None);
+        assert_eq!(
+            tokenizer.next(),
+            Token {
+                token_type: TokenType::EndOfFile,
+                repr: "",
+                start: "move".len()
+                    + ".".len()
+                    + "dw".len()
+                    + " ".len()
+                    + "D0".len()
+                    + ",".len()
+                    + "A5".len(),
+                end: "move".len()
+                    + ".".len()
+                    + "dw".len()
+                    + " ".len()
+                    + "D0".len()
+                    + ",".len()
+                    + "A5".len(),
+                line: 1,
+            }
+        );
     }
 
     #[test]
@@ -842,7 +959,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Identifier,
                 repr: "hello",
@@ -855,7 +972,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Identifier,
                 repr: "world",
@@ -874,7 +991,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Move,
                 repr: "move",
@@ -887,7 +1004,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Dot,
                 repr: ".",
@@ -900,7 +1017,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Dword,
                 repr: "dw",
@@ -913,7 +1030,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::A0,
                 repr: "A0",
@@ -926,7 +1043,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::Comma,
                 repr: ",",
@@ -939,7 +1056,7 @@ mod tests {
         let token = tokenizer.next();
 
         assert_eq!(
-            token.unwrap(),
+            token,
             Token {
                 token_type: TokenType::DecimalNumber(123456),
                 repr: "123456",
