@@ -5,6 +5,7 @@ mod lexer;
 //      - create a lib instead of a binary, i usually always create binaries but i should learn to work more with libs :)
 use lexer::{Token, TokenType, Tokenizer};
 
+#[derive(Debug, PartialEq, Eq)]
 enum Ast<'a> {
     LabelDefinition {
         repr: Token<'a>,
@@ -58,26 +59,40 @@ impl<'a> Parser<'a> {
         self.curr_token = self.tokenizer.next();
     }
 
-    fn parse_move(&mut self) -> Ast {
-        //Next up we match the Size of the Move Opcode
-        let size_ast = match self.curr_token.token_type() {
-            TokenType::Byte | TokenType::Word | TokenType::Dword => Ast::Size {
-                repr: self.curr_token,
-            },
-            _ => todo!(), //If we cannot match any of these then we have an error!
-        };
+    fn match_token(&mut self, to_match: TokenType, error_message: &str) -> bool {
+        if self.curr_token.token_type() == to_match {
+            self.advance();
+            return true;
+        }
 
-        let dest_register = match self.curr_token.token_type() {
-            //TODO: Memory, MemoryInc, MemoryDec
-            TokenType::HexNumber(_) | TokenType::BinaryNumber(_) | TokenType::DecimalNumber(_) => {
-                //I only really care if we have some kind of number not what the number actually is...
-                //so we can safely ignore all the information that is contained within the TokenType
-                //and just use the "header" for matching purposes :) Then we just store the token inside
-                //our Ast node and we have the number at the ready when we need it!
-                Ast::Number {
+        println!("Error: {}", error_message);
+        false
+    }
+
+    fn match_number_type(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        match current_token {
+            TokenType::HexNumber(_) | TokenType::DecimalNumber(_) | TokenType::BinaryNumber(_) => {
+                let result = Some(Ast::Number {
                     repr: self.curr_token,
-                }
+                });
+                self.advance();
+                result
             }
+            token => None,
+        }
+    }
+
+    fn match_size(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        match self.curr_token.token_type() {
+            TokenType::Byte | TokenType::Word | TokenType::Dword => Some(Ast::Size {
+                repr: self.curr_token,
+            }),
+            _ => None, //If we cannot match any of these then we have an error!
+        }
+    }
+
+    fn match_register_type(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        match current_token {
             TokenType::D0
             | TokenType::D1
             | TokenType::D2
@@ -109,48 +124,55 @@ impl<'a> Parser<'a> {
             | TokenType::A12
             | TokenType::A13
             | TokenType::A14
-            | TokenType::A15 => Ast::Register {
-                repr: self.curr_token,
-            },
-            _ => todo!(),
+            | TokenType::A15 => {
+                let result = Some(Ast::Register {
+                    repr: self.curr_token,
+                });
+                self.advance();
+
+                result
+            }
+            _ => None,
+        }
+    }
+
+    fn parse_move(&mut self) -> Ast {
+        if !self.match_token(TokenType::Dot, "'.' expected after a sized opcode!") {
+            todo!();
+        }
+
+        //TODO: We need a way to match many tokens!
+
+        let tt = self.curr_token.token_type();
+        //Next up we match the Size of the Move Opcode
+        let size_ast: Ast = if let Some(ast) = self.match_size(tt) {
+            ast
+        } else {
+            panic!("error");
         };
 
-        let src_register = match self.curr_token.token_type() {
-            TokenType::D0
-            | TokenType::D1
-            | TokenType::D2
-            | TokenType::D3
-            | TokenType::D4
-            | TokenType::D5
-            | TokenType::D6
-            | TokenType::D7
-            | TokenType::D8
-            | TokenType::D9
-            | TokenType::D10
-            | TokenType::D11
-            | TokenType::D12
-            | TokenType::D13
-            | TokenType::D14
-            | TokenType::D15
-            | TokenType::A0
-            | TokenType::A1
-            | TokenType::A2
-            | TokenType::A3
-            | TokenType::A4
-            | TokenType::A5
-            | TokenType::A6
-            | TokenType::A7
-            | TokenType::A8
-            | TokenType::A9
-            | TokenType::A10
-            | TokenType::A11
-            | TokenType::A12
-            | TokenType::A13
-            | TokenType::A14
-            | TokenType::A15 => Ast::Register {
-                repr: self.curr_token,
-            },
-            _ => todo!(),
+        self.advance();
+        let tt = self.curr_token.token_type();
+        let dest_register = if let Some(ast) = self.match_register_type(tt) {
+            ast
+        } else {
+            panic!("error");
+        };
+
+        if !self.match_token(
+            TokenType::Comma,
+            "missing ',' after the first operand of the opcode",
+        ) {
+            todo!()
+        }
+
+        let tt = self.curr_token.token_type();
+        let src_register: Ast = if let Some(ast) = self.match_number_type(tt) {
+            ast
+        } else if let Some(ast) = self.match_register_type(tt) {
+            ast
+        } else {
+            panic!("Error")
         };
 
         Ast::Move {
@@ -175,6 +197,64 @@ impl<'a> Parser<'a> {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_parse_move() {
+        let source = "move.dw D0, A2";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+        println!("{:#?}", node);
+
+        assert!(matches!(node, Ast::Move { .. }));
+
+        match node {
+            Ast::Move { size, dest, src } => {
+                assert!(matches!(size.as_ref(), Ast::Size { .. }));
+                assert!(matches!(dest.as_ref(), Ast::Register { .. }));
+                assert!(matches!(src.as_ref(), Ast::Register { .. }));
+            }
+            _ => unreachable!(),
+        }
+
+        /*assert_eq!(
+            node,
+            Ast::Move {
+                size: Box::new(Ast::Size {
+                    repr: Token {
+                        token_type: TokenType::Dword,
+                        repr: "dw",
+                        start: "move.".len(),
+                        end: "move.dw".len(),
+                        line: 1,
+                    }
+                }),
+                dest: Box::new(Ast::Register {
+                    repr: Token {
+                        token_type: TokenType::D0,
+                        repr: "D0",
+                        start: "move.dw ".len(),
+                        end: "move.dw D0".len(),
+                        line: 1,
+                    }
+                }),
+                src: Box::new(Ast::Register {
+                    repr: Token {
+                        token_type: TokenType::A2,
+                        repr: "A2",
+                        start: "move.dw D0, ".len(),
+                        end: "move.dw D0, A2".len(),
+                        line: 1,
+                    }
+                })
+            }
+        )*/
+    }
+}
 //Let's hope that we can keep the borrowchecker happy or if we have to do some trickery in order to keep all the tokens
 //with their fancy lifetimes alive...
 /*
