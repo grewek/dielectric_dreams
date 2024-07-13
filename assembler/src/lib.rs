@@ -4,6 +4,36 @@ mod lexer;
 //      - Trying to get better in TDD but it's usage shouldn't be as dogmatic as many people practice it...
 //      - create a lib instead of a binary, i usually always create binaries but i should learn to work more with libs :)
 use lexer::{Token, TokenType, Tokenizer};
+use std::fmt;
+enum ParserError {
+    UnexpectedSymbol(String, String),
+    InvalidOpcodeSize(String),
+    InvalidOperand(String),
+}
+
+impl fmt::Display for ParserError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match self {
+            ParserError::UnexpectedSymbol(expected, got) => {
+                write!(f, "expected a '{}' but got a '{}'", expected, got)
+            }
+            ParserError::InvalidOpcodeSize(got) => {
+                write!(
+                    f,
+                    "expected an opcode size like 'b(yte)','w(ord)' or 'dw(ord)' but got {}",
+                    got
+                )
+            }
+            ParserError::InvalidOperand(got) => {
+                write!(
+                    f,
+                    "the '{}' given operand is invalid in the current context",
+                    got
+                )
+            }
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 enum Ast<'a> {
@@ -59,18 +89,16 @@ impl<'a> Parser<'a> {
         self.curr_token = self.tokenizer.next();
     }
 
-    fn match_token(&mut self, to_match: TokenType, error_message: &str) -> bool {
+    fn match_token(&mut self, to_match: TokenType) -> bool {
         if self.curr_token.token_type() == to_match {
             self.advance();
             return true;
         }
-
-        println!("Error: {}", error_message);
         false
     }
 
-    fn match_number_type(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
-        match current_token {
+    fn match_number_type(&mut self, tt: TokenType) -> Option<Ast<'a>> {
+        match tt {
             TokenType::HexNumber(_) | TokenType::DecimalNumber(_) | TokenType::BinaryNumber(_) => {
                 let result = Some(Ast::Number {
                     repr: self.curr_token,
@@ -82,11 +110,15 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn match_size(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
-        match self.curr_token.token_type() {
-            TokenType::Byte | TokenType::Word | TokenType::Dword => Some(Ast::Size {
-                repr: self.curr_token,
-            }),
+    fn match_size(&mut self, tt: TokenType) -> Option<Ast<'a>> {
+        match tt {
+            TokenType::Byte | TokenType::Word | TokenType::Dword => {
+                let result = Some(Ast::Size {
+                    repr: self.curr_token,
+                });
+                self.advance();
+                result
+            }
             _ => None, //If we cannot match any of these then we have an error!
         }
     }
@@ -136,9 +168,12 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_move(&mut self) -> Ast {
-        if !self.match_token(TokenType::Dot, "'.' expected after a sized opcode!") {
-            todo!();
+    fn parse_move(&mut self) -> Result<Ast, ParserError> {
+        if !self.match_token(TokenType::Dot) {
+            return Err(ParserError::UnexpectedSymbol(
+                ".".to_string(),
+                self.curr_token.get_repr().to_string(),
+            ));
         }
 
         //TODO: We need a way to match many tokens!
@@ -148,22 +183,25 @@ impl<'a> Parser<'a> {
         let size_ast: Ast = if let Some(ast) = self.match_size(tt) {
             ast
         } else {
-            panic!("error");
+            return Err(ParserError::InvalidOpcodeSize(
+                self.curr_token.get_repr().to_string(),
+            ));
         };
 
-        self.advance();
         let tt = self.curr_token.token_type();
         let dest_register = if let Some(ast) = self.match_register_type(tt) {
             ast
         } else {
-            panic!("error");
+            return Err(ParserError::InvalidOperand(
+                self.curr_token.get_repr().to_string(),
+            ));
         };
 
-        if !self.match_token(
-            TokenType::Comma,
-            "missing ',' after the first operand of the opcode",
-        ) {
-            todo!()
+        if !self.match_token(TokenType::Comma) {
+            return Err(ParserError::UnexpectedSymbol(
+                ",".to_string(),
+                self.curr_token.get_repr().to_string(),
+            ));
         }
 
         let tt = self.curr_token.token_type();
@@ -172,20 +210,22 @@ impl<'a> Parser<'a> {
         } else if let Some(ast) = self.match_register_type(tt) {
             ast
         } else {
-            panic!("Error")
+            return Err(ParserError::InvalidOperand(
+                self.curr_token.get_repr().to_string(),
+            ));
         };
 
-        Ast::Move {
+        Ok(Ast::Move {
             size: Box::new(size_ast),
             dest: Box::new(dest_register),
             src: Box::new(src_register),
-        }
+        })
     }
 
-    fn parse_lea(&mut self) -> Ast {
+    fn parse_lea(&mut self) -> Result<Ast, ParserError> {
         todo!()
     }
-    fn parse(&mut self) -> Ast {
+    fn parse(&mut self) -> Result<Ast, ParserError> {
         match self.curr_token.token_type() {
             TokenType::Move => {
                 self.advance();
@@ -208,61 +248,60 @@ mod test {
         let mut parser = Parser::new(source);
 
         let node = parser.parse();
-        println!("{:#?}", node);
 
-        assert!(matches!(node, Ast::Move { .. }));
+        assert!(matches!(node, Ok(Ast::Move { .. })));
 
         match node {
-            Ast::Move { size, dest, src } => {
+            Ok(Ast::Move { size, dest, src }) => {
                 assert!(matches!(size.as_ref(), Ast::Size { .. }));
                 assert!(matches!(dest.as_ref(), Ast::Register { .. }));
                 assert!(matches!(src.as_ref(), Ast::Register { .. }));
             }
             _ => unreachable!(),
         }
+    }
 
-        /*assert_eq!(
-            node,
-            Ast::Move {
-                size: Box::new(Ast::Size {
-                    repr: Token {
-                        token_type: TokenType::Dword,
-                        repr: "dw",
-                        start: "move.".len(),
-                        end: "move.dw".len(),
-                        line: 1,
-                    }
-                }),
-                dest: Box::new(Ast::Register {
-                    repr: Token {
-                        token_type: TokenType::D0,
-                        repr: "D0",
-                        start: "move.dw ".len(),
-                        end: "move.dw D0".len(),
-                        line: 1,
-                    }
-                }),
-                src: Box::new(Ast::Register {
-                    repr: Token {
-                        token_type: TokenType::A2,
-                        repr: "A2",
-                        start: "move.dw D0, ".len(),
-                        end: "move.dw D0, A2".len(),
-                        line: 1,
-                    }
-                })
-            }
-        )*/
+    #[test]
+    fn test_parse_move_error_missing_dot() {
+        let source = "move D0, A2";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+
+        assert!(matches!(node, Err(ParserError::UnexpectedSymbol(_, _))))
+    }
+
+    #[test]
+    fn test_parse_move_error_missing_size() {
+        let source = "move. D0, A2";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+
+        assert!(matches!(node, Err(ParserError::InvalidOpcodeSize(_))))
+    }
+
+    #[test]
+    fn test_parse_move_error_faulty_destination() {
+        let source = "move.dw hello, A2";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+
+        assert!(matches!(node, Err(ParserError::InvalidOperand(_))))
+    }
+
+    #[test]
+    fn test_parse_move_error_faulty_source() {
+        let source = "move.dw D0, +";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+
+        assert!(matches!(node, Err(ParserError::InvalidOperand(_))))
     }
 }
-//Let's hope that we can keep the borrowchecker happy or if we have to do some trickery in order to keep all the tokens
-//with their fancy lifetimes alive...
-/*
-   Move.Dw D0, D1
-   Ast::Move {
-       repr: {TokenType::Move ...}
-       size: Ast::Size { TokenType::DWord }
-       dest: Ast::Register { TokenType::D0 }
-       src: Ast::Register { TokenType::D1 }
-   }
-*/
