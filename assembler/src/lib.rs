@@ -304,4 +304,24 @@ mod test {
 
         assert!(matches!(node, Err(ParserError::InvalidOperand(_))))
     }
+
+    #[test]
+    fn test_parse_move_immediate_value() {
+        let source = "move.dw D0, $AABBCCDD";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+
+        assert!(matches!(node, Ok(Ast::Move { .. })));
+
+        match node {
+            Ok(Ast::Move { size, dest, src }) => {
+                assert!(matches!(size.as_ref(), Ast::Size { .. }));
+                assert!(matches!(dest.as_ref(), Ast::Register { .. }));
+                assert!(matches!(src.as_ref(), Ast::Number { .. }));
+            }
+            _ => unreachable!(),
+        }
+    }
 }
