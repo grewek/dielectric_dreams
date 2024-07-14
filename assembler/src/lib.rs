@@ -37,6 +37,9 @@ impl fmt::Display for ParserError {
 
 #[derive(Debug, PartialEq, Eq)]
 enum Ast<'a> {
+    Nop {
+        repr: Token<'a>,
+    },
     LabelDefinition {
         repr: Token<'a>,
     },
@@ -56,6 +59,17 @@ enum Ast<'a> {
     },
 
     Size {
+        repr: Token<'a>,
+    },
+
+    MemoryTarget {
+        repr: Token<'a>,
+        operation: Token<'a>,
+    },
+    Plus {
+        repr: Token<'a>,
+    },
+    Minus {
         repr: Token<'a>,
     },
 
@@ -175,8 +189,6 @@ impl<'a> Parser<'a> {
                 self.curr_token.get_repr().to_string(),
             ));
         }
-
-        //TODO: We need a way to match many tokens!
 
         let tt = self.curr_token.token_type();
         //Next up we match the Size of the Move Opcode
