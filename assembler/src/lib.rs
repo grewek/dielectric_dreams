@@ -5,7 +5,9 @@ mod lexer;
 //      - create a lib instead of a binary, i usually always create binaries but i should learn to work more with libs :)
 use lexer::{Token, TokenType, Tokenizer};
 use std::fmt;
-enum ParserError {
+#[derive(Debug)]
+pub enum ParserError {
+    //TODO: I want more descriptive Errortypes which tell the user exactly what is wrong i.e. the opcode size on is a good example.
     UnexpectedSymbol(String, String),
     InvalidOpcodeSize(String),
     InvalidOperand(String),
@@ -36,7 +38,7 @@ impl fmt::Display for ParserError {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum Ast<'a> {
+pub enum Ast<'a> {
     Nop {
         repr: Token<'a>,
     },
@@ -81,14 +83,14 @@ enum Ast<'a> {
     },
 }
 
-struct Parser<'a> {
+pub struct Parser<'a> {
     tokenizer: Tokenizer<'a>,
     prev_token: Option<Token<'a>>,
     curr_token: Token<'a>,
 }
 
 impl<'a> Parser<'a> {
-    fn new(source: &'a str) -> Self {
+    pub fn new(source: &'a str) -> Self {
         let mut tokenizer = Tokenizer::new(source);
         let curr_token = tokenizer.next();
         Self {
@@ -237,8 +239,23 @@ impl<'a> Parser<'a> {
     fn parse_lea(&mut self) -> Result<Ast, ParserError> {
         todo!()
     }
-    fn parse(&mut self) -> Result<Ast, ParserError> {
+
+    fn parse_label_definition(&mut self) -> Result<Ast, ParserError> {
+        let label = self.curr_token;
+        self.advance();
+
+        if !self.match_token(TokenType::Colon) {
+            return Err(ParserError::UnexpectedSymbol(
+                ":".to_string(),
+                self.curr_token.get_repr().to_string(),
+            ));
+        }
+
+        return Ok(Ast::LabelDefinition { repr: label });
+    }
+    pub fn parse(&mut self) -> Result<Ast, ParserError> {
         match self.curr_token.token_type() {
+            TokenType::Identifier => self.parse_label_definition(),
             TokenType::Move => {
                 self.advance();
                 self.parse_move()
