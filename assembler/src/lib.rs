@@ -157,7 +157,63 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn match_register_type(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+    fn match_address_register(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        match current_token {
+            TokenType::A0
+            | TokenType::A1
+            | TokenType::A2
+            | TokenType::A3
+            | TokenType::A4
+            | TokenType::A5
+            | TokenType::A6
+            | TokenType::A7
+            | TokenType::A8
+            | TokenType::A9
+            | TokenType::A10
+            | TokenType::A11
+            | TokenType::A12
+            | TokenType::A13
+            | TokenType::A14
+            | TokenType::A15 => {
+                let result = Some(Ast::Register {
+                    repr: self.curr_token,
+                });
+                self.advance();
+                result
+            }
+            _ => None,
+        }
+    }
+    fn match_data_register(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        match current_token {
+            TokenType::D0
+            | TokenType::D1
+            | TokenType::D2
+            | TokenType::D3
+            | TokenType::D4
+            | TokenType::D5
+            | TokenType::D6
+            | TokenType::D7
+            | TokenType::D8
+            | TokenType::D9
+            | TokenType::D10
+            | TokenType::D11
+            | TokenType::D12
+            | TokenType::D13
+            | TokenType::D14
+            | TokenType::D15 => {
+                let result = Some(Ast::Register {
+                    repr: self.curr_token,
+                });
+                self.advance();
+
+                result
+            }
+            _ => None,
+        }
+    }
+
+    fn match_all_registers(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
         match current_token {
             TokenType::D0
             | TokenType::D1
