@@ -420,8 +420,9 @@ impl<'a> Parser<'a> {
             ));
         }
 
-        return Ok(Ast::LabelDefinition { repr: label });
+        Ok(Ast::LabelDefinition { repr: label })
     }
+
     pub fn parse(&mut self) -> Result<Ast, ParserError> {
         match self.curr_token.token_type() {
             TokenType::Identifier => self.parse_label_definition(),
@@ -429,7 +430,10 @@ impl<'a> Parser<'a> {
                 self.advance();
                 self.parse_move()
             }
-            TokenType::Lea => self.parse_lea(),
+            TokenType::Lea => {
+                self.advance();
+                self.parse_lea()
+            }
             _ => todo!(),
         }
     }
