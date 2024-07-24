@@ -5,6 +5,11 @@ mod lexer;
 //      - create a lib instead of a binary, i usually always create binaries but i should learn to work more with libs :)
 use lexer::{Token, TokenType, Tokenizer};
 use std::fmt;
+
+pub enum RegisterTypes {
+    DataRegisters,
+    AddressRegisters,
+}
 #[derive(Debug)]
 pub enum ParserError {
     //TODO: I want more descriptive Errortypes which tell the user exactly what is wrong i.e. the opcode size on is a good example.
