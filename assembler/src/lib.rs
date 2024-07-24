@@ -10,6 +10,13 @@ pub enum RegisterTypes {
     DataRegisters,
     AddressRegisters,
 }
+
+pub enum MemoryTypes {
+    ImmediateValue,
+    Direct,
+    DirectInc,
+    DirectDec,
+}
 #[derive(Debug)]
 pub enum ParserError {
     //TODO: I want more descriptive Errortypes which tell the user exactly what is wrong i.e. the opcode size on is a good example.
