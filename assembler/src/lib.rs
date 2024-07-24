@@ -340,14 +340,13 @@ impl<'a> Parser<'a> {
             ));
         };
 
-        let tt = self.curr_token.token_type();
-        let dest_register = if let Some(ast) = self.match_register_type(tt) {
-            ast
-        } else {
-            return Err(ParserError::InvalidOperand(
-                self.curr_token.get_repr().to_string(),
-            ));
-        };
+        let dest_register = self.parse_arg(
+            &[
+                RegisterTypes::AddressRegisters,
+                RegisterTypes::DataRegisters,
+            ],
+            &[],
+        )?;
 
         if !self.match_token(TokenType::Comma) {
             return Err(ParserError::UnexpectedSymbol(
@@ -356,16 +355,18 @@ impl<'a> Parser<'a> {
             ));
         }
 
-        let tt = self.curr_token.token_type();
-        let src_register: Ast = if let Some(ast) = self.match_number_type(tt) {
-            ast
-        } else if let Some(ast) = self.match_register_type(tt) {
-            ast
-        } else {
-            return Err(ParserError::InvalidOperand(
-                self.curr_token.get_repr().to_string(),
-            ));
-        };
+        let src_register = self.parse_arg(
+            &[
+                RegisterTypes::AddressRegisters,
+                RegisterTypes::DataRegisters,
+            ],
+            &[
+                MemoryTypes::Direct,
+                MemoryTypes::DirectDec,
+                MemoryTypes::DirectInc,
+                MemoryTypes::ImmediateValue,
+            ],
+        )?;
 
         Ok(Ast::Move {
             size: Box::new(size_ast),
@@ -375,7 +376,37 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_lea(&mut self) -> Result<Ast, ParserError> {
-        todo!()
+        if !self.match_token(TokenType::Dot) {
+            return Err(ParserError::UnexpectedSymbol(
+                ".".to_string(),
+                self.curr_token.get_repr().to_string(),
+            ));
+        }
+
+        //Match the size only dword is possible!
+        if !self.match_token(TokenType::Dword) {
+            let repr = self.curr_token.get_repr();
+            return Err(ParserError::IllegalSize(
+                repr.to_string(),
+                self.curr_token.get_repr().to_string(),
+            ));
+        }
+
+        let dest_register = self.parse_arg(&[RegisterTypes::AddressRegisters], &[])?;
+
+        if !self.match_token(TokenType::Comma) {
+            return Err(ParserError::UnexpectedSymbol(
+                ",".to_string(),
+                self.curr_token.get_repr().to_string(),
+            ));
+        }
+
+        let src_register = self.parse_arg(&[], &[MemoryTypes::ImmediateValue])?;
+
+        Ok(Ast::Lea {
+            dest: Box::new(dest_register),
+            src: Box::new(src_register),
+        })
     }
 
     fn parse_label_definition(&mut self) -> Result<Ast, ParserError> {
