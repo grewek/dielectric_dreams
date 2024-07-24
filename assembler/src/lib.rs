@@ -46,6 +46,13 @@ impl fmt::Display for ParserError {
                     got
                 )
             }
+            ParserError::IllegalSize(got, message) => {
+                write!(
+                    f,
+                    "the size '{}' is invalid for the given opcode.\nhint: {}",
+                    got, message
+                )
+            }
         }
     }
 }
