@@ -258,7 +258,71 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_immediate_value(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        let tt = self.curr_token.token_type();
+        self.match_number_type(tt)
+    }
+
+    fn parse_direct(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        None
+    }
+
+    fn parse_direct_inc(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        None
+    }
+
+    fn parse_direct_dec(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        None
+    }
+
+    fn parse_register_arg(
+        &mut self,
+        mode: &RegisterTypes,
+        current_token: TokenType,
+    ) -> Option<Ast<'a>> {
+        match mode {
+            RegisterTypes::DataRegisters => self.match_data_register(current_token),
+            RegisterTypes::AddressRegisters => self.match_address_register(current_token),
+        }
+    }
+    fn parse_memory_arg(
+        &mut self,
+        mode: &MemoryTypes,
+        current_token: TokenType,
+    ) -> Option<Ast<'a>> {
+        match mode {
+            MemoryTypes::ImmediateValue => self.parse_immediate_value(current_token),
+            MemoryTypes::Direct => self.parse_direct(current_token),
+            MemoryTypes::DirectInc => self.parse_direct_inc(current_token),
+            MemoryTypes::DirectDec => self.parse_direct_dec(current_token),
+        }
+    }
+    fn parse_arg(
+        &mut self,
+        register_types: &[RegisterTypes],
+        memory_types: &[MemoryTypes],
+    ) -> Result<Ast<'a>, ParserError> {
+        let tt = self.curr_token.token_type();
+
+        for mode in register_types {
+            if let Some(register_arg) = self.parse_register_arg(mode, tt) {
+                return Ok(register_arg);
+            }
+        }
+
+        for mode in memory_types {
+            if let Some(memory_arg) = self.parse_memory_arg(mode, tt) {
+                return Ok(memory_arg);
+            }
+        }
+
+        Err(ParserError::InvalidOperand(
+            self.curr_token.get_repr().to_string(),
+        ))
+    }
+
     fn parse_move(&mut self) -> Result<Ast, ParserError> {
+        //Why are my parsers always so messy -.- how do i improve this...?!?
         if !self.match_token(TokenType::Dot) {
             return Err(ParserError::UnexpectedSymbol(
                 ".".to_string(),
