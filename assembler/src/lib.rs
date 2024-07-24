@@ -74,8 +74,6 @@ pub enum Ast<'a> {
         src: Box<Ast<'a>>,
     },
     Lea {
-        repr: Token<'a>,
-
         dest: Box<Ast<'a>>,
         src: Box<Ast<'a>>,
     },
@@ -142,7 +140,7 @@ impl<'a> Parser<'a> {
                 self.advance();
                 result
             }
-            token => None,
+            _token => None,
         }
     }
 
