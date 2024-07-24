@@ -23,6 +23,7 @@ pub enum ParserError {
     UnexpectedSymbol(String, String),
     InvalidOpcodeSize(String),
     InvalidOperand(String),
+    IllegalSize(String, String),
 }
 
 impl fmt::Display for ParserError {
