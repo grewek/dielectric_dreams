@@ -1,9 +1,7 @@
-use assembler::Parser;
+use assembler::Assembler;
 
 fn main() {
-    let source = "start:\nmove.dw A0, $AABBCCDD";
-
-    let mut parser = Parser::new(source);
-    println!("{:?}", parser.parse().unwrap());
-    println!("{:?}", parser.parse().unwrap());
+    let source = "start:\nmove.dw A0, $AABBCCDD\nmove.w D0,$FFBB\nlea.dw A0,$FFBBCCDD";
+    let mut assembler = Assembler::new();
+    assembler.assemble(source);
 }
