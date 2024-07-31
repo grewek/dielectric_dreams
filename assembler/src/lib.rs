@@ -66,11 +66,25 @@ impl Assembler {
             _ => unreachable!(),
         }
     }
-    pub fn encode_source(ast: &Ast) -> u32 {
+    pub fn encode_source(ast: &Ast) -> (u32, Option<TokenType>) {
         match ast {
             Ast::MemoryTarget { repr, operation } => todo!(),
-            Ast::Register { repr } => Assembler::encode_register(repr.token_type()) << 19,
-            Ast::Number { repr } => todo!(),
+            Ast::Register { repr } => (Assembler::encode_register(repr.token_type()) << 19, None),
+            Ast::Number { repr } => {
+                let addr_mode = 0x01 << 8;
+                match repr.token_type() {
+                    TokenType::ByteHexNumber(_) => (addr_mode, Some(repr.token_type())),
+                    TokenType::ByteDecimalNumber(_) => (addr_mode, Some(repr.token_type())),
+                    TokenType::ByteBinaryNumber(_) => (addr_mode, Some(repr.token_type())),
+                    TokenType::WordHexNumber(_) => (addr_mode, Some(repr.token_type())),
+                    TokenType::WordDecimalNumber(_) => (addr_mode, Some(repr.token_type())),
+                    TokenType::WordBinaryNumber(_) => (addr_mode, Some(repr.token_type())),
+                    TokenType::DwordHexNumber(_) => (addr_mode, Some(repr.token_type())),
+                    TokenType::DwordDecimalNumber(_) => (addr_mode, Some(repr.token_type())),
+                    TokenType::DwordBinaryNumber(_) => (addr_mode, Some(repr.token_type())),
+                    _ => unreachable!(),
+                }
+            }
             Ast::ProgramEnd => todo!(),
             _ => unreachable!(),
         }
@@ -128,8 +142,23 @@ impl Assembler {
                     let opcode = Assembler::generate_operation_opcode(TokenType::Move);
                     let size = Assembler::generate_operation_size(size.as_ref());
                     let dest = Assembler::encode_dest(dest.as_ref());
-                    let src = Assembler::encode_source(src.as_ref());
+                    //let src = Assembler::encode_source(src.as_ref());
+                    let (src, additional_data) = Assembler::encode_source(src.as_ref());
+
+                    //TODO: This next line needs to be move into the match statements ! Things are getting very ugly now :( time for a refactor?!?
                     assembled.push(size | src | dest | opcode);
+                    match additional_data {
+                        Some(TokenType::ByteHexNumber(_)) => todo!(),
+                        Some(TokenType::ByteDecimalNumber(_)) => todo!(),
+                        Some(TokenType::ByteBinaryNumber(_)) => todo!(),
+                        Some(TokenType::WordHexNumber(_)) => todo!(),
+                        Some(TokenType::WordDecimalNumber(_)) => todo!(),
+                        Some(TokenType::WordBinaryNumber(_)) => todo!(),
+                        Some(TokenType::DwordHexNumber(value)) => assembled.push(value),
+                        Some(TokenType::DwordDecimalNumber(value)) => assembled.push(value as u32),
+                        Some(TokenType::DwordBinaryNumber(_)) => todo!(),
+                        _ => (),
+                    };
                 }
                 Ast::Lea { dest, src } => todo!(),
                 Ast::Nop { repr } => {
