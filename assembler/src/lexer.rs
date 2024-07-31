@@ -174,8 +174,14 @@ impl<'a> Token<'a> {
             .parse()
             .unwrap_or_else(|_| panic!("ERROR: Scanned Item was apparently not a value {}", repr));
 
+        let token_type = match Self::convert_typed_value(value) {
+            BitWidth::Byte => TokenType::ByteDecimalNumber(value as i8),
+            BitWidth::Word => TokenType::WordDecimalNumber(value as i16),
+            BitWidth::Dword => TokenType::DwordDecimalNumber(value as i32),
+        };
+
         Self {
-            token_type: TokenType::DecimalNumber(value),
+            token_type,
             repr,
             start,
             end,
@@ -192,8 +198,14 @@ impl<'a> Token<'a> {
             )
         });
 
+        let token_type = match Self::convert_typed_value(value) {
+            BitWidth::Byte => TokenType::ByteBinaryNumber(value as u8),
+            BitWidth::Word => TokenType::WordBinaryNumber(value as u16),
+            BitWidth::Dword => TokenType::DwordBinaryNumber(value as u32),
+        };
+
         Self {
-            token_type: TokenType::BinaryNumber(value),
+            token_type,
             repr,
             start,
             end,
@@ -209,8 +221,14 @@ impl<'a> Token<'a> {
             );
         });
 
+        let token_type = match Self::convert_typed_value(value) {
+            BitWidth::Byte => TokenType::ByteHexNumber(value as u8),
+            BitWidth::Word => TokenType::WordHexNumber(value as u16),
+            BitWidth::Dword => TokenType::DwordHexNumber(value as u32),
+        };
+
         Self {
-            token_type: TokenType::HexNumber(value),
+            token_type,
             repr,
             start,
             end,
