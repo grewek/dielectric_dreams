@@ -69,7 +69,7 @@ impl Assembler {
     pub fn encode_source(ast: &Ast) -> u32 {
         match ast {
             Ast::MemoryTarget { repr, operation } => todo!(),
-            Ast::Register { repr } => Assembler::encode_register(repr.token_type()) << 14,
+            Ast::Register { repr } => Assembler::encode_register(repr.token_type()) << 19,
             Ast::Number { repr } => todo!(),
             Ast::ProgramEnd => todo!(),
             _ => unreachable!(),
