@@ -338,7 +338,15 @@ impl<'a> Token<'a> {
     pub fn is_number(&self) -> bool {
         matches!(
             self.token_type,
-            TokenType::HexNumber(_) | TokenType::DecimalNumber(_) | TokenType::BinaryNumber(_)
+            TokenType::ByteHexNumber(_)
+                | TokenType::ByteDecimalNumber(_)
+                | TokenType::ByteBinaryNumber(_)
+                | TokenType::WordHexNumber(_)
+                | TokenType::WordDecimalNumber(_)
+                | TokenType::WordBinaryNumber(_)
+                | TokenType::DwordHexNumber(_)
+                | TokenType::DwordDecimalNumber(_)
+                | TokenType::DwordBinaryNumber(_)
         )
     }
 }
