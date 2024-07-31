@@ -155,6 +155,17 @@ impl<'a> Token<'a> {
         }
     }
 
+    fn convert_typed_value(value: u32) -> BitWidth {
+        //TODO: Figure out if this is the job of the parser or the lexer ?!?
+        if value <= u8::MAX as u32 {
+            BitWidth::Byte
+        } else if value <= u16::MAX as u32 {
+            BitWidth::Word
+        } else {
+            BitWidth::Dword
+        }
+    }
+
     fn new_number(repr: &'a [u8], start: usize, end: usize, line: usize) -> Self {
         //NOTE: Due to the way we parse numbers i am pretty sure that i can just unwrap here! and do not need to
         //      care about the error state! But i might be wrong so lets add a panic in case anything goes haywire...
