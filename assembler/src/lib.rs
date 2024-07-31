@@ -21,13 +21,72 @@ impl Assembler {
         }
     }
 
-    pub fn generate_operation_size(tt: TokenType) -> u32 {
+    pub fn encode_register(tt: TokenType) -> u32 {
         match tt {
-            TokenType::Byte => 0x00 << 29,
-            TokenType::Word => 0x01 << 29,
-            TokenType::Dword => 0x02 << 29,
-            //NOTE: Until this point all possible errors have been handled
-            //      if we reach this it would be a bug!
+            TokenType::D0 => 0x00,
+            TokenType::D1 => 0x01,
+            TokenType::D2 => 0x02,
+            TokenType::D3 => 0x03,
+            TokenType::D4 => 0x04,
+            TokenType::D5 => 0x05,
+            TokenType::D6 => 0x06,
+            TokenType::D7 => 0x07,
+            TokenType::D8 => 0x08,
+            TokenType::D9 => 0x09,
+            TokenType::D10 => 0x0A,
+            TokenType::D11 => 0x0B,
+            TokenType::D12 => 0x0C,
+            TokenType::D13 => 0x0D,
+            TokenType::D14 => 0x0E,
+            TokenType::D15 => 0x0F,
+            TokenType::A0 => 0x10,
+            TokenType::A1 => 0x11,
+            TokenType::A2 => 0x12,
+            TokenType::A3 => 0x13,
+            TokenType::A4 => 0x14,
+            TokenType::A5 => 0x15,
+            TokenType::A6 => 0x16,
+            TokenType::A7 => 0x17,
+            TokenType::A8 => 0x18,
+            TokenType::A9 => 0x19,
+            TokenType::A10 => 0x1A,
+            TokenType::A11 => 0x1B,
+            TokenType::A12 => 0x1C,
+            TokenType::A13 => 0x1D,
+            TokenType::A14 => 0x1E,
+            TokenType::A15 => 0x1F,
+            _ => unreachable!(),
+        }
+    }
+    pub fn encode_dest(ast: &Ast) -> u32 {
+        match ast {
+            Ast::MemoryTarget { repr, operation } => todo!(),
+            Ast::Register { repr } => Assembler::encode_register(repr.token_type()) << 14,
+            Ast::Number { repr } => todo!(),
+            _ => unreachable!(),
+        }
+    }
+    pub fn encode_source(ast: &Ast) -> u32 {
+        match ast {
+            Ast::MemoryTarget { repr, operation } => todo!(),
+            Ast::Register { repr } => Assembler::encode_register(repr.token_type()) << 14,
+            Ast::Number { repr } => todo!(),
+            Ast::ProgramEnd => todo!(),
+            _ => unreachable!(),
+        }
+    }
+    pub fn generate_operation_size(ast: &Ast) -> u32 {
+        match ast {
+            Ast::Size { repr } => {
+                match repr.token_type() {
+                    TokenType::Byte => 0x00 << 29,
+                    TokenType::Word => 0x01 << 29,
+                    TokenType::Dword => 0x02 << 29,
+                    //NOTE: Until this point all possible errors have been handled
+                    //      if we reach this it would be a bug!
+                    _ => unreachable!(),
+                }
+            }
             _ => unreachable!(),
         }
     }
@@ -65,7 +124,13 @@ impl Assembler {
                     self.label_definitions
                         .insert(repr.get_repr().to_string(), current_position_in_bytes);
                 }
-                Ast::Move { size, dest, src } => todo!(),
+                Ast::Move { size, dest, src } => {
+                    let opcode = Assembler::generate_operation_opcode(TokenType::Move);
+                    let size = Assembler::generate_operation_size(size.as_ref());
+                    let dest = Assembler::encode_dest(dest.as_ref());
+                    let src = Assembler::encode_source(src.as_ref());
+                    assembled.push(size | src | dest | opcode);
+                }
                 Ast::Lea { dest, src } => todo!(),
                 Ast::Nop { repr } => {
                     assembled.push(0x00000000);
@@ -73,7 +138,9 @@ impl Assembler {
                 _ => todo!(),
             }
             current_position_in_bytes += 4;
-            println!("{:?}", to_parse);
+            //println!("{:?}", to_parse);
+
+            println!("{:#x?}", assembled);
         }
     }
 }
