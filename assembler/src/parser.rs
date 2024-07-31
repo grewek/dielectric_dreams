@@ -129,7 +129,15 @@ impl<'a> Parser<'a> {
 
     fn match_number_type(&mut self, tt: TokenType) -> Option<Ast<'a>> {
         match tt {
-            TokenType::HexNumber(_) | TokenType::DecimalNumber(_) | TokenType::BinaryNumber(_) => {
+            TokenType::ByteHexNumber(_)
+            | TokenType::ByteDecimalNumber(_)
+            | TokenType::ByteBinaryNumber(_)
+            | TokenType::WordHexNumber(_)
+            | TokenType::WordDecimalNumber(_)
+            | TokenType::WordBinaryNumber(_)
+            | TokenType::DwordHexNumber(_)
+            | TokenType::DwordDecimalNumber(_)
+            | TokenType::DwordBinaryNumber(_) => {
                 let result = Some(Ast::Number {
                     repr: self.curr_token,
                 });
