@@ -11,6 +11,7 @@ pub enum TokenType {
     //Keywords
     Move,
     Lea,
+    Nop,
 
     Byte,
     Word,
@@ -87,6 +88,7 @@ impl<'a> Token<'a> {
         let possible_keyword = repr.to_lowercase();
 
         let token_type = match possible_keyword.as_str() {
+            "nop" => TokenType::Nop,
             "move" => TokenType::Move,
             "lea" => TokenType::Lea,
             "b" => TokenType::Byte,
