@@ -1,5 +1,11 @@
 use std::str;
 
+enum BitWidth {
+    Byte,
+    Word,
+    Dword,
+}
+
 //TODO:
 //      - Refactor the lexer into it's own file
 //      - remove the last unwraps!
@@ -52,9 +58,17 @@ pub enum TokenType {
     A15,
 
     // Number Types
-    HexNumber(u32),
-    DecimalNumber(i32),
-    BinaryNumber(u32),
+    ByteHexNumber(u8),
+    ByteDecimalNumber(i8),
+    ByteBinaryNumber(u8),
+
+    WordHexNumber(u16),
+    WordDecimalNumber(i16),
+    WordBinaryNumber(u16),
+
+    DwordHexNumber(u32),
+    DwordDecimalNumber(i32),
+    DwordBinaryNumber(u32),
 
     //Operators
     PoundSign,
