@@ -697,7 +697,7 @@ mod tests {
         assert_eq!(
             token,
             Token {
-                token_type: TokenType::DecimalNumber(1337),
+                token_type: TokenType::WordDecimalNumber(1337),
                 repr: "1337",
                 start: 1,
                 end: source.len(),
@@ -718,7 +718,7 @@ mod tests {
         assert_eq!(
             token,
             Token {
-                token_type: TokenType::DecimalNumber(-1337),
+                token_type: TokenType::WordDecimalNumber(-1337),
                 repr: "-1337",
                 start: 1,
                 end: source.len(),
@@ -867,7 +867,7 @@ mod tests {
         assert_eq!(
             token,
             Token {
-                token_type: TokenType::HexNumber(1706806493),
+                token_type: TokenType::DwordHexNumber(1706806493),
                 repr: "65BBCCDD",
                 start: 1,
                 end: source.len(),
@@ -886,7 +886,7 @@ mod tests {
         assert_eq!(
             token,
             Token {
-                token_type: TokenType::BinaryNumber(176),
+                token_type: TokenType::ByteBinaryNumber(176),
                 repr: "10110000",
                 start: 1,
                 end: source.len(),
@@ -1111,7 +1111,7 @@ mod tests {
         assert_eq!(
             token,
             Token {
-                token_type: TokenType::DecimalNumber(123456),
+                token_type: TokenType::DwordDecimalNumber(123456),
                 repr: "123456",
                 start: "move".len()
                     + ".".len()
