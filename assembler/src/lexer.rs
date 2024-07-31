@@ -1,5 +1,11 @@
 use std::str;
 
+enum BitWidth {
+    Byte,
+    Word,
+    Dword,
+}
+
 //TODO:
 //      - Refactor the lexer into it's own file
 //      - remove the last unwraps!
@@ -52,9 +58,17 @@ pub enum TokenType {
     A15,
 
     // Number Types
-    HexNumber(u32),
-    DecimalNumber(i32),
-    BinaryNumber(u32),
+    ByteHexNumber(u8),
+    ByteDecimalNumber(i8),
+    ByteBinaryNumber(u8),
+
+    WordHexNumber(u16),
+    WordDecimalNumber(i16),
+    WordBinaryNumber(u16),
+
+    DwordHexNumber(u32),
+    DwordDecimalNumber(i32),
+    DwordBinaryNumber(u32),
 
     //Operators
     PoundSign,
@@ -141,16 +155,44 @@ impl<'a> Token<'a> {
         }
     }
 
+    fn convert_signed_value(value: i32) -> BitWidth {
+        if value >= i8::MIN as i32 && value <= i8::MAX as i32 {
+            BitWidth::Byte
+        } else if value >= i16::MIN as i32 && value <= i16::MAX as i32 {
+            BitWidth::Word
+        } else {
+            BitWidth::Dword
+        }
+    }
+
+    fn convert_unsigned_value(value: u32) -> BitWidth {
+        //TODO: Figure out if this is the job of the parser or the lexer ?!?
+        if value <= u8::MAX as u32 {
+            BitWidth::Byte
+        } else if value <= u16::MAX as u32 {
+            //TODO: Issues with two's complement :)
+            BitWidth::Word
+        } else {
+            BitWidth::Dword
+        }
+    }
+
     fn new_number(repr: &'a [u8], start: usize, end: usize, line: usize) -> Self {
         //NOTE: Due to the way we parse numbers i am pretty sure that i can just unwrap here! and do not need to
         //      care about the error state! But i might be wrong so lets add a panic in case anything goes haywire...
         let repr = str::from_utf8(repr).unwrap();
-        let value = repr
+        let value: i32 = repr
             .parse()
             .unwrap_or_else(|_| panic!("ERROR: Scanned Item was apparently not a value {}", repr));
 
+        let token_type = match Self::convert_signed_value(value) {
+            BitWidth::Byte => TokenType::ByteDecimalNumber(value as i8),
+            BitWidth::Word => TokenType::WordDecimalNumber(value as i16),
+            BitWidth::Dword => TokenType::DwordDecimalNumber(value),
+        };
+
         Self {
-            token_type: TokenType::DecimalNumber(value),
+            token_type,
             repr,
             start,
             end,
@@ -167,8 +209,14 @@ impl<'a> Token<'a> {
             )
         });
 
+        let token_type = match Self::convert_unsigned_value(value) {
+            BitWidth::Byte => TokenType::ByteBinaryNumber(value as u8),
+            BitWidth::Word => TokenType::WordBinaryNumber(value as u16),
+            BitWidth::Dword => TokenType::DwordBinaryNumber(value),
+        };
+
         Self {
-            token_type: TokenType::BinaryNumber(value),
+            token_type,
             repr,
             start,
             end,
@@ -184,8 +232,14 @@ impl<'a> Token<'a> {
             );
         });
 
+        let token_type = match Self::convert_unsigned_value(value) {
+            BitWidth::Byte => TokenType::ByteHexNumber(value as u8),
+            BitWidth::Word => TokenType::WordHexNumber(value as u16),
+            BitWidth::Dword => TokenType::DwordHexNumber(value),
+        };
+
         Self {
-            token_type: TokenType::HexNumber(value),
+            token_type,
             repr,
             start,
             end,
@@ -295,7 +349,15 @@ impl<'a> Token<'a> {
     pub fn is_number(&self) -> bool {
         matches!(
             self.token_type,
-            TokenType::HexNumber(_) | TokenType::DecimalNumber(_) | TokenType::BinaryNumber(_)
+            TokenType::ByteHexNumber(_)
+                | TokenType::ByteDecimalNumber(_)
+                | TokenType::ByteBinaryNumber(_)
+                | TokenType::WordHexNumber(_)
+                | TokenType::WordDecimalNumber(_)
+                | TokenType::WordBinaryNumber(_)
+                | TokenType::DwordHexNumber(_)
+                | TokenType::DwordDecimalNumber(_)
+                | TokenType::DwordBinaryNumber(_)
         )
     }
 }
@@ -393,7 +455,7 @@ impl<'a> Tokenizer<'a> {
             Some(b'+') => TokenType::Plus,
             Some(b'-') => TokenType::Minus,
             Some(ch) => todo!("Reached a {}", ch),
-            None => unreachable!(),
+            _ => unreachable!(),
         };
 
         self.advance();
@@ -646,7 +708,7 @@ mod tests {
         assert_eq!(
             token,
             Token {
-                token_type: TokenType::DecimalNumber(1337),
+                token_type: TokenType::WordDecimalNumber(1337),
                 repr: "1337",
                 start: 1,
                 end: source.len(),
@@ -667,7 +729,7 @@ mod tests {
         assert_eq!(
             token,
             Token {
-                token_type: TokenType::DecimalNumber(-1337),
+                token_type: TokenType::WordDecimalNumber(-1337),
                 repr: "-1337",
                 start: 1,
                 end: source.len(),
@@ -816,7 +878,7 @@ mod tests {
         assert_eq!(
             token,
             Token {
-                token_type: TokenType::HexNumber(1706806493),
+                token_type: TokenType::DwordHexNumber(1706806493),
                 repr: "65BBCCDD",
                 start: 1,
                 end: source.len(),
@@ -835,7 +897,7 @@ mod tests {
         assert_eq!(
             token,
             Token {
-                token_type: TokenType::BinaryNumber(176),
+                token_type: TokenType::ByteBinaryNumber(176),
                 repr: "10110000",
                 start: 1,
                 end: source.len(),
@@ -1060,7 +1122,7 @@ mod tests {
         assert_eq!(
             token,
             Token {
-                token_type: TokenType::DecimalNumber(123456),
+                token_type: TokenType::DwordDecimalNumber(123456),
                 repr: "123456",
                 start: "move".len()
                     + ".".len()
