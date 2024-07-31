@@ -430,6 +430,13 @@ impl<'a> Parser<'a> {
                 self.advance();
                 self.parse_lea()
             }
+            TokenType::Nop => {
+                self.advance();
+
+                Ok(Ast::Nop {
+                    repr: self.curr_token,
+                })
+            }
             TokenType::EndOfFile => Ok(Ast::ProgramEnd),
             _ => todo!(),
         }
