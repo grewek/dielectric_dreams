@@ -155,11 +155,22 @@ impl<'a> Token<'a> {
         }
     }
 
-    fn convert_typed_value(value: u32) -> BitWidth {
+    fn convert_signed_value(value: i32) -> BitWidth {
+        if value >= i8::MIN as i32 && value <= i8::MAX as i32 {
+            BitWidth::Byte
+        } else if value >= i16::MIN as i32 && value <= i16::MAX as i32 {
+            BitWidth::Word
+        } else {
+            BitWidth::Dword
+        }
+    }
+
+    fn convert_unsigned_value(value: u32) -> BitWidth {
         //TODO: Figure out if this is the job of the parser or the lexer ?!?
         if value <= u8::MAX as u32 {
             BitWidth::Byte
         } else if value <= u16::MAX as u32 {
+            //TODO: Issues with two's complement :)
             BitWidth::Word
         } else {
             BitWidth::Dword
@@ -170,14 +181,14 @@ impl<'a> Token<'a> {
         //NOTE: Due to the way we parse numbers i am pretty sure that i can just unwrap here! and do not need to
         //      care about the error state! But i might be wrong so lets add a panic in case anything goes haywire...
         let repr = str::from_utf8(repr).unwrap();
-        let value = repr
+        let value: i32 = repr
             .parse()
             .unwrap_or_else(|_| panic!("ERROR: Scanned Item was apparently not a value {}", repr));
 
-        let token_type = match Self::convert_typed_value(value) {
+        let token_type = match Self::convert_signed_value(value) {
             BitWidth::Byte => TokenType::ByteDecimalNumber(value as i8),
             BitWidth::Word => TokenType::WordDecimalNumber(value as i16),
-            BitWidth::Dword => TokenType::DwordDecimalNumber(value as i32),
+            BitWidth::Dword => TokenType::DwordDecimalNumber(value),
         };
 
         Self {
@@ -198,10 +209,10 @@ impl<'a> Token<'a> {
             )
         });
 
-        let token_type = match Self::convert_typed_value(value) {
+        let token_type = match Self::convert_unsigned_value(value) {
             BitWidth::Byte => TokenType::ByteBinaryNumber(value as u8),
             BitWidth::Word => TokenType::WordBinaryNumber(value as u16),
-            BitWidth::Dword => TokenType::DwordBinaryNumber(value as u32),
+            BitWidth::Dword => TokenType::DwordBinaryNumber(value),
         };
 
         Self {
@@ -221,10 +232,10 @@ impl<'a> Token<'a> {
             );
         });
 
-        let token_type = match Self::convert_typed_value(value) {
+        let token_type = match Self::convert_unsigned_value(value) {
             BitWidth::Byte => TokenType::ByteHexNumber(value as u8),
             BitWidth::Word => TokenType::WordHexNumber(value as u16),
-            BitWidth::Dword => TokenType::DwordHexNumber(value as u32),
+            BitWidth::Dword => TokenType::DwordHexNumber(value),
         };
 
         Self {
@@ -444,7 +455,7 @@ impl<'a> Tokenizer<'a> {
             Some(b'+') => TokenType::Plus,
             Some(b'-') => TokenType::Minus,
             Some(ch) => todo!("Reached a {}", ch),
-            None => unreachable!(),
+            _ => unreachable!(),
         };
 
         self.advance();
