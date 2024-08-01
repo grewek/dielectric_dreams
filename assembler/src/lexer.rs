@@ -291,6 +291,14 @@ impl<'a> Token<'a> {
         )
     }
 
+    pub fn get_line(&self) -> usize {
+        self.line
+    }
+
+    pub fn get_position(&self) -> usize {
+        self.start
+    }
+
     pub fn token_type(&self) -> TokenType {
         self.token_type
     }
