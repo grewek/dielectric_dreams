@@ -66,6 +66,8 @@ impl Assembler {
             _ => unreachable!(),
         }
     }
+
+    //TODO: The return type doesn't feel good...
     pub fn encode_source(ast: &Ast) -> (u32, Option<TokenType>) {
         match ast {
             Ast::MemoryTarget { repr, operation } => todo!(),
@@ -73,6 +75,8 @@ impl Assembler {
             Ast::Number { repr } => {
                 let addr_mode = 0x01 << 8;
                 match repr.token_type() {
+                    //TODO: Can't we just pass the type up ? because we __know__ at this point that it is some kind
+                    //of number type that needs further processing by the generator!
                     TokenType::ByteHexNumber(_) => (addr_mode, Some(repr.token_type())),
                     TokenType::ByteDecimalNumber(_) => (addr_mode, Some(repr.token_type())),
                     TokenType::ByteBinaryNumber(_) => (addr_mode, Some(repr.token_type())),
@@ -118,13 +122,15 @@ impl Assembler {
 
         let mut current_position_in_bytes = 0;
         loop {
-            let to_parse = parser.parse().expect("failure in parsing the source code ");
+            let ast = match parser.parse() {
+                Ok(Ast::ProgramEnd) => return,
+                Ok(ast) => ast,
+                Err(e) => {
+                    panic!("ERROR: {}", e);
+                }
+            };
 
-            if to_parse == Ast::ProgramEnd {
-                return;
-            }
-
-            match to_parse {
+            match ast {
                 Ast::Label { repr } => {
                     if self.label_definitions.contains_key(repr.get_repr()) {
                         //TODO: Insert the value stored inside our label hashmap
@@ -154,8 +160,14 @@ impl Assembler {
                         Some(TokenType::WordHexNumber(_)) => todo!(),
                         Some(TokenType::WordDecimalNumber(_)) => todo!(),
                         Some(TokenType::WordBinaryNumber(_)) => todo!(),
-                        Some(TokenType::DwordHexNumber(value)) => assembled.push(value),
-                        Some(TokenType::DwordDecimalNumber(value)) => assembled.push(value as u32),
+                        Some(TokenType::DwordHexNumber(value)) => {
+                            assembled.push(value);
+                            current_position_in_bytes += 4;
+                        }
+                        Some(TokenType::DwordDecimalNumber(value)) => {
+                            assembled.push(value as u32);
+                            current_position_in_bytes += 4;
+                        }
                         Some(TokenType::DwordBinaryNumber(_)) => todo!(),
                         _ => (),
                     };
