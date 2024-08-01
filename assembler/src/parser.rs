@@ -15,37 +15,37 @@ pub enum MemoryTypes {
 #[derive(Debug)]
 pub enum ParserError {
     //TODO: I want more descriptive Errortypes which tell the user exactly what is wrong i.e. the opcode size.
-    UnexpectedSymbol(String, String),
-    InvalidOpcodeSize(String),
-    InvalidOperand(String),
-    IllegalSize(String, String),
+    UnexpectedSymbol(usize, usize, String, String),
+    InvalidOpcodeSize(usize, usize, String),
+    InvalidOperand(usize, usize, String),
+    IllegalSize(usize, usize, String, String),
 }
 
 impl fmt::Display for ParserError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
-            ParserError::UnexpectedSymbol(expected, got) => {
-                write!(f, "expected a '{}' but got a '{}'", expected, got)
-            }
-            ParserError::InvalidOpcodeSize(got) => {
+            ParserError::UnexpectedSymbol(line, position, expected, got) => {
                 write!(
                     f,
-                    "expected an opcode size like 'b(yte)','w(ord)' or 'dw(ord)' but got {}",
-                    got
+                    "{}:{}:expected a '{}' but got a '{}'",
+                    line, position, expected, got
                 )
             }
-            ParserError::InvalidOperand(got) => {
+            ParserError::InvalidOpcodeSize(line, position, got) => {
                 write!(
                     f,
-                    "the '{}' given operand is invalid in the current context",
-                    got
+                    "{}:{}:expected an opcode size like 'b(yte)','w(ord)' or 'dw(ord)' but got {}",
+                    line, position, got
                 )
             }
-            ParserError::IllegalSize(got, message) => {
+            ParserError::InvalidOperand(line, position, got) => {
+                write!(f, "{}:{}:found unexpected symbol {}", line, position, got)
+            }
+            ParserError::IllegalSize(line, position, got, message) => {
                 write!(
                     f,
-                    "the size '{}' is invalid for the given opcode.\nhint: {}",
-                    got, message
+                    "{}:{}:the size '{}' is invalid for the given opcode.\nhint: {}",
+                    line, position, got, message
                 )
             }
         }
@@ -321,6 +321,8 @@ impl<'a> Parser<'a> {
         }
 
         Err(ParserError::InvalidOperand(
+            self.curr_token.get_line(),
+            self.curr_token.get_position(),
             self.curr_token.get_repr().to_string(),
         ))
     }
@@ -329,6 +331,8 @@ impl<'a> Parser<'a> {
         //Why are my parsers always so messy -.- how do i improve this...?!?
         if !self.match_token(TokenType::Dot) {
             return Err(ParserError::UnexpectedSymbol(
+                self.curr_token.get_line(),
+                self.curr_token.get_position(),
                 ".".to_string(),
                 self.curr_token.get_repr().to_string(),
             ));
@@ -340,6 +344,8 @@ impl<'a> Parser<'a> {
             ast
         } else {
             return Err(ParserError::InvalidOpcodeSize(
+                self.curr_token.get_line(),
+                self.curr_token.get_position(),
                 self.curr_token.get_repr().to_string(),
             ));
         };
@@ -354,6 +360,8 @@ impl<'a> Parser<'a> {
 
         if !self.match_token(TokenType::Comma) {
             return Err(ParserError::UnexpectedSymbol(
+                self.curr_token.get_line(),
+                self.curr_token.get_position(),
                 ",".to_string(),
                 self.curr_token.get_repr().to_string(),
             ));
@@ -382,6 +390,8 @@ impl<'a> Parser<'a> {
     fn parse_lea(&mut self) -> Result<Ast, ParserError> {
         if !self.match_token(TokenType::Dot) {
             return Err(ParserError::UnexpectedSymbol(
+                self.curr_token.get_line(),
+                self.curr_token.get_position(),
                 ".".to_string(),
                 self.curr_token.get_repr().to_string(),
             ));
@@ -391,6 +401,8 @@ impl<'a> Parser<'a> {
         if !self.match_token(TokenType::Dword) {
             let repr = self.curr_token.get_repr();
             return Err(ParserError::IllegalSize(
+                self.curr_token.get_line(),
+                self.curr_token.get_position(),
                 repr.to_string(),
                 self.curr_token.get_repr().to_string(),
             ));
@@ -400,6 +412,8 @@ impl<'a> Parser<'a> {
 
         if !self.match_token(TokenType::Comma) {
             return Err(ParserError::UnexpectedSymbol(
+                self.curr_token.get_line(),
+                self.curr_token.get_position(),
                 ",".to_string(),
                 self.curr_token.get_repr().to_string(),
             ));
@@ -419,6 +433,8 @@ impl<'a> Parser<'a> {
 
         if !self.match_token(TokenType::Colon) {
             return Err(ParserError::UnexpectedSymbol(
+                self.curr_token.get_line(),
+                self.curr_token.get_position(),
                 ":".to_string(),
                 self.curr_token.get_repr().to_string(),
             ));
@@ -483,7 +499,10 @@ mod test {
 
         let node = parser.parse();
 
-        assert!(matches!(node, Err(ParserError::UnexpectedSymbol(_, _))))
+        assert!(matches!(
+            node,
+            Err(ParserError::UnexpectedSymbol(_, _, _, _))
+        ))
     }
 
     #[test]
@@ -494,7 +513,7 @@ mod test {
 
         let node = parser.parse();
 
-        assert!(matches!(node, Err(ParserError::InvalidOpcodeSize(_))))
+        assert!(matches!(node, Err(ParserError::InvalidOpcodeSize(_, _, _))))
     }
 
     #[test]
@@ -505,7 +524,7 @@ mod test {
 
         let node = parser.parse();
 
-        assert!(matches!(node, Err(ParserError::InvalidOperand(_))))
+        assert!(matches!(node, Err(ParserError::InvalidOperand(_, _, _))))
     }
 
     #[test]
@@ -516,7 +535,7 @@ mod test {
 
         let node = parser.parse();
 
-        assert!(matches!(node, Err(ParserError::InvalidOperand(_))))
+        assert!(matches!(node, Err(ParserError::InvalidOperand(_, _, _))))
     }
 
     #[test]
