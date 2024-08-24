@@ -1,5 +1,5 @@
 build:
-	gcc -Wall -Wextra -std=c99 ./src/*.c -o bin/krisp
+	gcc -Wall -Wextra -Wpedantic -std=c99 ./src/*.c -o bin/krisp
 
 run:
 	./bin/krisp
