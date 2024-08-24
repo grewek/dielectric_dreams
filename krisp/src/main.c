@@ -79,20 +79,79 @@ void CompilationMode(const char *filePath, const char *outputPath)
     // These are the magic NASM incantations!
     WriteAssembly(asmOutput, "section .text");
     WriteAssembly(asmOutput, "global _start");
+
+    //---- UTILTIY FUNCTIONS ----
+    // This assembly was taken at verbatim from godbolt
+    WriteAssembly(asmOutput, ";; Godbolt Dump Routine");
+    WriteAssembly(asmOutput, "dump:");
+    WriteAssembly(asmOutput, "\tsub     rsp, 40");
+    WriteAssembly(asmOutput, "\tpxor    xmm0, xmm0");
+    WriteAssembly(asmOutput, "\tmov     r8, -3689348814741910323");
+    WriteAssembly(asmOutput, "\tmovaps  [rsp+16], xmm0");
+    WriteAssembly(asmOutput, "\tlea     rcx, [rsp+30]");
+    WriteAssembly(asmOutput, "\tmov     BYTE [rsp+31], 10");
+    WriteAssembly(asmOutput, "\tmovaps  [rsp], xmm0");
+    WriteAssembly(asmOutput, ".L2:");
+    WriteAssembly(asmOutput, "\tmov     rax, rdi");
+    WriteAssembly(asmOutput, "\tmul     r8");
+    WriteAssembly(asmOutput, "\tmov     rax, rdi");
+    WriteAssembly(asmOutput, "\tshr     rdx, 3");
+    WriteAssembly(asmOutput, "\tlea     rsi, [rdx+rdx*4]");
+    WriteAssembly(asmOutput, "\tadd     rsi, rsi");
+    WriteAssembly(asmOutput, "\tsub     rax, rsi");
+    WriteAssembly(asmOutput, "\tmov     rsi, rcx");
+    WriteAssembly(asmOutput, "\tsub     rcx, 1");
+    WriteAssembly(asmOutput, "\tadd     eax, 48");
+    WriteAssembly(asmOutput, "\tmov     [rcx+1], al");
+    WriteAssembly(asmOutput, "\tmov     rax, rdi");
+    WriteAssembly(asmOutput, "\tmov     rdi, rdx");
+    WriteAssembly(asmOutput, "\tcmp     rax, 9");
+    WriteAssembly(asmOutput, "\tja      .L2");
+    WriteAssembly(asmOutput, "\tmov     rax, 1");
+    WriteAssembly(asmOutput, "\tlea     rdx, [rsp+32]");
+    WriteAssembly(asmOutput, "\tmov     edi, 1");
+    WriteAssembly(asmOutput, "\tsub     rdx, rsi");
+    WriteAssembly(asmOutput, "\tsyscall");
+    WriteAssembly(asmOutput, "\tadd     rsp, 40");
+    WriteAssembly(asmOutput, "\tret");
+    //---- END OF UTILITY BLOCK ----
+
     WriteAssembly(asmOutput, "_start:");
-    WriteAssembly(asmOutput, "\t;; Exit");
-    WriteAssembly(asmOutput, "\tmov rax, 60");
 
     u8 *token = (u8 *)strtok((char *)source, "() ");
 
     while (token)
     {
-        u32 value = atoi(token);
-        const char op[256] = {0}; // FIXME: This is a recepie for desaster!
-        // FIXME: Clang is not amused about the next line...
-        sprintf(op, "\tmov rdi,%d", value);
-        WriteAssembly(asmOutput, op);
-        token = (u8 *)strtok(NULL, "() ");
+        if (strcmp((const char *)token, "dump") == 0)
+        {
+            fprintf(stdout, "DEBUG: Saw a %s token!\n", token);
+            // TODO: Also we cannot any longer ignore the parenthesis!
+            // TODO: Sooner or later we need a real lexer i think...
+            // TODO: We need to dump the value that is at the next position!
+            //       for now we might assume that valueToken is always a value in the range of 32bit!
+            token = strtok(NULL, "() ");
+            u32 valueToken = atoi(token);
+            fprintf(stdout, "the next token is %d\n", valueToken);
+            const char op[256] = {0};
+            sprintf(op, "\tmov rdi,%d", valueToken);
+
+            WriteAssembly(asmOutput, "\t;; CALL DUMP");
+            WriteAssembly(asmOutput, op);
+            WriteAssembly(asmOutput, "\tcall dump");
+        }
+        else
+        {
+            u32 value = atoi((const char *)token);
+            const char op[256] = {0}; // FIXME: This is a recepie for desaster!
+            // FIXME: Clang is not amused about the next line...
+            sprintf(op, "\tmov rdi,%d", value);
+            WriteAssembly(asmOutput, op);
+            token = (u8 *)strtok(NULL, "() ");
+        }
+
+        // TODO: Great now this all a position dependent mess :D
+        WriteAssembly(asmOutput, "\t;; Exit");
+        WriteAssembly(asmOutput, "\tmov rax, 60");
     }
 
     WriteAssembly(asmOutput, "\tsyscall");
