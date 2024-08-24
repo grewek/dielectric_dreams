@@ -11,6 +11,26 @@ my rough plan is (if i will ever finish it...):
 3. Make Tools available, compilers, sprite editors (think of picotron)
 4. Make it runnable on a FPGA
 
+# Projects
+
+# Dielectric Cpu
+
+This is the project that contains the actual cpu emulation will grow over time
+
+# Dielectric ISA generator
+
+Helpful tool in generating all possible opcodes quickly
+
+# assembler
+
+The assembler for my ISA
+
+# KRISP
+
+A Lisp like low-level language which can be simulated and compiled to either x86-64 or dd ISA.
+
+This thing will be written in C as i need some change in language now and then. 
+
 
 ## Resources
 
