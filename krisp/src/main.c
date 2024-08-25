@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <errno.h>
 #include "types.h"
+
+#include "lexer.h"
 
 void PrintFatalError(const char *msg)
 {
@@ -54,6 +57,7 @@ FILE *OpenOutputFile(const char *outputPath)
 
 void SimulationMode(const char *filePath)
 {
+    // TODO: Replace the strtok call with our lexer!
     ReadSourceFile(filePath);
     fprintf(stdout, "%s:%ld\n", buffer, bufferLength);
 
@@ -71,9 +75,75 @@ void SimulationMode(const char *filePath)
     printf("Returning with value %d\n", returnValue);
 }
 
+void Parser(FILE *asmOutput, Lexer *lexer)
+{
+    Token token = NextToken(lexer);
+
+    while (token.tt != TOKEN_TYPE_EOF)
+    {
+        if (token.tt == TOKEN_TYPE_OPEN_PAREN)
+        {
+            Parser(asmOutput, lexer);
+            token = NextToken(lexer);
+        }
+        else if (token.tt == TOKEN_TYPE_CLOSE_PAREN)
+        {
+            return;
+        }
+        else if (token.tt == TOKEN_TYPE_DUMP)
+        {
+            // NOTE: Right now we are assume that the value to dump is __always__ in rdi
+            token = NextToken(lexer);
+
+            if (token.tt == TOKEN_TYPE_OPEN_PAREN)
+            {
+                Parser(asmOutput, lexer);
+            }
+
+            WriteAssembly(asmOutput, "\t;; CALL DUMP");
+            // WriteAssembly(asmOutput, op);
+            WriteAssembly(asmOutput, "\tcall dump");
+        }
+        else if (strncmp((const char *)token.tokenStart, "+", token.length) == 0)
+        {
+            token = NextToken(lexer);
+
+            const char op[256] = {0};
+
+            u32 valueA = strtol(token.tokenStart, NULL, 10);
+            sprintf(op, "\tadd rdi,%d", valueA);
+            WriteAssembly(asmOutput, "\t;; ADDITION");
+            WriteAssembly(asmOutput, op);
+
+            token = NextToken(lexer);
+
+            if (token.tt != TOKEN_TYPE_VALUE)
+            {
+                continue;
+            }
+
+            u32 valueB = strtol(token.tokenStart, NULL, 10);
+            sprintf(op, "\tadd rdi,%d", valueB);
+            WriteAssembly(asmOutput, op);
+        }
+        else
+        {
+            u32 value = strtol(token.tokenStart, NULL, 10);
+            const char op[256] = {0}; // FIXME: This is a recepie for desaster!
+            // FIXME: Clang is not amused about the next line...
+            sprintf(op, "\tmov rdi,%d", value);
+            WriteAssembly(asmOutput, op);
+            token = NextToken(lexer);
+        }
+
+        token = NextToken(lexer);
+    }
+}
+
 void CompilationMode(const char *filePath, const char *outputPath)
 {
     u8 *source = ReadSourceFile(filePath);
+
     FILE *asmOutput = OpenOutputFile(outputPath);
 
     // These are the magic NASM incantations!
@@ -118,42 +188,12 @@ void CompilationMode(const char *filePath, const char *outputPath)
 
     WriteAssembly(asmOutput, "_start:");
 
-    u8 *token = (u8 *)strtok((char *)source, "() ");
+    Lexer lexer = NewLexer(source);
+    Parser(asmOutput, &lexer);
 
-    while (token)
-    {
-        if (strcmp((const char *)token, "dump") == 0)
-        {
-            fprintf(stdout, "DEBUG: Saw a %s token!\n", token);
-            // TODO: Also we cannot any longer ignore the parenthesis!
-            // TODO: Sooner or later we need a real lexer i think...
-            // TODO: We need to dump the value that is at the next position!
-            //       for now we might assume that valueToken is always a value in the range of 32bit!
-            token = strtok(NULL, "() ");
-            u32 valueToken = atoi(token);
-            fprintf(stdout, "the next token is %d\n", valueToken);
-            const char op[256] = {0};
-            sprintf(op, "\tmov rdi,%d", valueToken);
-
-            WriteAssembly(asmOutput, "\t;; CALL DUMP");
-            WriteAssembly(asmOutput, op);
-            WriteAssembly(asmOutput, "\tcall dump");
-        }
-        else
-        {
-            u32 value = atoi((const char *)token);
-            const char op[256] = {0}; // FIXME: This is a recepie for desaster!
-            // FIXME: Clang is not amused about the next line...
-            sprintf(op, "\tmov rdi,%d", value);
-            WriteAssembly(asmOutput, op);
-            token = (u8 *)strtok(NULL, "() ");
-        }
-
-        // TODO: Great now this all a position dependent mess :D
-        WriteAssembly(asmOutput, "\t;; Exit");
-        WriteAssembly(asmOutput, "\tmov rax, 60");
-    }
-
+    // TODO: Great now this all a position dependent mess :D
+    WriteAssembly(asmOutput, "\t;; Exit");
+    WriteAssembly(asmOutput, "\tmov rax, 60");
     WriteAssembly(asmOutput, "\tsyscall");
 
     // NOTE: If we don't close the file nasm will have some issues compiling the file...
