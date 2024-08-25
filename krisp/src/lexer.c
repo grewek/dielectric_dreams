@@ -69,8 +69,6 @@ Token DigestValue(Lexer *lexer)
 
 Token NextToken(Lexer *lexer)
 {
-    fprintf(stdout, "current source: %s\n", lexer->source);
-
     while (*lexer->source)
     {
         if (*lexer->source == '(')
