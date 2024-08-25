@@ -108,14 +108,39 @@ void Parser(FILE *asmOutput, Lexer *lexer)
         {
             token = NextToken(lexer);
 
-            const char op[256] = {0};
+            const char op[256] = {0}; // FIXME: ...
 
             WriteAssembly(asmOutput, "\t;; ADDITION");
             while (token.tt == TOKEN_TYPE_VALUE)
             {
+                // TODO: OPTIMIZATION
+                //       We could make this code smarter aggregating all given constant values
+                //       and just move them into rdi!
                 u32 value = strtol(token.tokenStart, NULL, 10);
                 sprintf(op, "\tadd rdi,%d", value);
 
+                WriteAssembly(asmOutput, op);
+
+                token = NextToken(lexer);
+            }
+        }
+        else if (strncmp((const char *)token.tokenStart, "-", token.length) == 0)
+        {
+            token = NextToken(lexer);
+
+            const char op[256] = {0}; // FIXME: Again this should be refactored into something useable!
+
+            WriteAssembly(asmOutput, "\t;; SUBTRACTION");
+
+            u32 value = strtol(token.tokenStart, NULL, 10);
+            sprintf(op, "\tmov rax,%d", value);
+            WriteAssembly(asmOutput, op);
+
+            token = NextToken(lexer);
+            while (token.tt == TOKEN_TYPE_VALUE)
+            {
+                u32 value = strtol(token.tokenStart, NULL, 10);
+                sprintf(op, "\tsub rax, %d", value);
                 WriteAssembly(asmOutput, op);
 
                 token = NextToken(lexer);
