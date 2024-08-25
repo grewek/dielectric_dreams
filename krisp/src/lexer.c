@@ -89,6 +89,12 @@ Token NextToken(Lexer *lexer)
             *lexer->source++;
             return result;
         }
+        else if (*lexer->source == '-')
+        {
+            Token result = {.tt = TOKEN_TYPE_MINUS, .tokenStart = lexer->source, .tokenEnd = lexer->source, .length = 1};
+            *lexer->source++;
+            return result;
+        }
         else if (*lexer->source == '_' || IsAlpha(*lexer->source))
         {
             return DigestIdentifier(lexer);
