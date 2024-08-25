@@ -92,7 +92,7 @@ void Parser(FILE *asmOutput, Lexer *lexer)
         }
         else if (token.tt == TOKEN_TYPE_DUMP)
         {
-            // NOTE: Right now we are assume that the value to dump is __always__ in rdi
+            // NOTE: Right now we assume that the value to dump is __always__ in rdi
             token = NextToken(lexer);
 
             if (token.tt == TOKEN_TYPE_OPEN_PAREN)
@@ -110,21 +110,16 @@ void Parser(FILE *asmOutput, Lexer *lexer)
 
             const char op[256] = {0};
 
-            u32 valueA = strtol(token.tokenStart, NULL, 10);
-            sprintf(op, "\tadd rdi,%d", valueA);
             WriteAssembly(asmOutput, "\t;; ADDITION");
-            WriteAssembly(asmOutput, op);
-
-            token = NextToken(lexer);
-
-            if (token.tt != TOKEN_TYPE_VALUE)
+            while (token.tt == TOKEN_TYPE_VALUE)
             {
-                continue;
-            }
+                u32 value = strtol(token.tokenStart, NULL, 10);
+                sprintf(op, "\tadd rdi,%d", value);
 
-            u32 valueB = strtol(token.tokenStart, NULL, 10);
-            sprintf(op, "\tadd rdi,%d", valueB);
-            WriteAssembly(asmOutput, op);
+                WriteAssembly(asmOutput, op);
+
+                token = NextToken(lexer);
+            }
         }
         else
         {
