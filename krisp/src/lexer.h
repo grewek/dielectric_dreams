@@ -28,5 +28,5 @@ typedef struct
     usize length;
 } Token;
 
-Lexer NewLexer(const char *source);
+Lexer NewLexer(const u8 *source);
 Token NextToken(Lexer *lexer);

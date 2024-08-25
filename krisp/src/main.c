@@ -108,7 +108,7 @@ void Parser(FILE *asmOutput, Lexer *lexer)
         {
             token = NextToken(lexer);
 
-            const char op[256] = {0}; // FIXME: ...
+            char op[256] = {0}; // FIXME: ...
 
             WriteAssembly(asmOutput, "\t;; ADDITION");
             while (token.tt == TOKEN_TYPE_VALUE)
@@ -116,7 +116,7 @@ void Parser(FILE *asmOutput, Lexer *lexer)
                 // TODO: OPTIMIZATION
                 //       We could make this code smarter aggregating all given constant values
                 //       and just move them into rdi!
-                u32 value = strtol(token.tokenStart, NULL, 10);
+                u32 value = strtol((const char *)token.tokenStart, NULL, 10);
                 sprintf(op, "\tadd rdi,%d", value);
 
                 WriteAssembly(asmOutput, op);
@@ -128,18 +128,18 @@ void Parser(FILE *asmOutput, Lexer *lexer)
         {
             token = NextToken(lexer);
 
-            const char op[256] = {0}; // FIXME: Again this should be refactored into something useable!
+            char op[256] = {0}; // FIXME: Again this should be refactored into something useable!
 
             WriteAssembly(asmOutput, "\t;; SUBTRACTION");
 
-            u32 value = strtol(token.tokenStart, NULL, 10);
+            u32 value = strtol((const char *)token.tokenStart, NULL, 10);
             sprintf(op, "\tmov rax,%d", value);
             WriteAssembly(asmOutput, op);
 
             token = NextToken(lexer);
             while (token.tt == TOKEN_TYPE_VALUE)
             {
-                u32 value = strtol(token.tokenStart, NULL, 10);
+                u32 value = strtol((const char *)token.tokenStart, NULL, 10);
                 sprintf(op, "\tsub rax, %d", value);
                 WriteAssembly(asmOutput, op);
 
@@ -148,8 +148,8 @@ void Parser(FILE *asmOutput, Lexer *lexer)
         }
         else
         {
-            u32 value = strtol(token.tokenStart, NULL, 10);
-            const char op[256] = {0}; // FIXME: This is a recepie for desaster!
+            u32 value = strtol((const char *)token.tokenStart, NULL, 10);
+            char op[256] = {0}; // FIXME: This is a recepie for desaster!
             // FIXME: Clang is not amused about the next line...
             sprintf(op, "\tmov rdi,%d", value);
             WriteAssembly(asmOutput, op);

@@ -4,7 +4,7 @@
 
 #include "lexer.h"
 
-Lexer NewLexer(const char *source)
+Lexer NewLexer(const u8 *source)
 {
     Lexer result = {.source = source};
     return result;
@@ -32,13 +32,13 @@ bool IsAlpha(u8 letter)
 
 Token DigestIdentifier(Lexer *lexer)
 {
-    u8 *start = lexer->source;
-    u8 *end = lexer->source;
+    const u8 *start = lexer->source;
+    const u8 *end = lexer->source;
 
     while (*lexer->source && IsAlpha(*lexer->source))
     {
         end += 1;
-        *lexer->source++;
+        lexer->source++;
     }
 
     // TODO: For now we can only match dump tokens all the other identifiers are lost in time..
@@ -49,12 +49,12 @@ Token DigestIdentifier(Lexer *lexer)
 
 Token DigestValue(Lexer *lexer)
 {
-    u8 *start = lexer->source;
-    u8 *end = lexer->source;
+    const u8 *start = lexer->source;
+    const u8 *end = lexer->source;
     while (*lexer->source && IsDigit(*lexer->source))
     {
         end += 1;
-        *lexer->source++;
+        lexer->source++;
     }
 
     assert(start != end);
@@ -74,25 +74,25 @@ Token NextToken(Lexer *lexer)
         if (*lexer->source == '(')
         {
             Token result = {.tt = TOKEN_TYPE_OPEN_PAREN, .tokenStart = lexer->source, .tokenEnd = lexer->source, .length = 1};
-            *lexer->source++;
+            lexer->source++;
             return result;
         }
         else if (*lexer->source == ')')
         {
             Token result = {.tt = TOKEN_TYPE_CLOSE_PAREN, .tokenStart = lexer->source, .tokenEnd = lexer->source, .length = 1};
-            *lexer->source++;
+            lexer->source++;
             return result;
         }
         else if (*lexer->source == '+')
         {
             Token result = {.tt = TOKEN_TYPE_PLUS, .tokenStart = lexer->source, .tokenEnd = lexer->source, .length = 1};
-            *lexer->source++;
+            lexer->source++;
             return result;
         }
         else if (*lexer->source == '-')
         {
             Token result = {.tt = TOKEN_TYPE_MINUS, .tokenStart = lexer->source, .tokenEnd = lexer->source, .length = 1};
-            *lexer->source++;
+            lexer->source++;
             return result;
         }
         else if (*lexer->source == '_' || IsAlpha(*lexer->source))
@@ -104,10 +104,10 @@ Token NextToken(Lexer *lexer)
             return DigestValue(lexer);
         }
 
-        *lexer->source++;
+        lexer->source++;
     }
 
-    assert(*lexer->source == NULL);
+    assert(*lexer->source == '\0');
     Token result = {.tt = TOKEN_TYPE_EOF, .tokenStart = lexer->source, .tokenEnd = lexer->source, .length = 1};
     return result;
 }
