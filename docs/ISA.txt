@@ -147,7 +147,23 @@ Push a value that is pointed to by an address register
 
 [SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
 1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 1 1    0x80000203         PUSH.DW (An)                   ?          None
+
+## PUSH (From Memory Increment)
+
+Push the value that is pointed to by an address register onto the stack, the address register will increase by the indicated size after the operation
+
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x00000403         PUSH.B  (An)+                  ?          None
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x40000403         PUSH.W  (An)+                  ?          None
 1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x80000403         PUSH.DW (An)+                  ?          None
+
+## PUSH (From Memory Decrement)
+
+Push the value that is pointed to by an address register onto the stack, the address register will decrease by the indicated size after the operation
+
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 1 1    0x00000603         PUSH.B  (An)-                  ?          None
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 1 1    0x40000603         PUSH.W  (An)-                  ?          None
 1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 1 1    0x80000603         PUSH.DW (An)-                  ?          None
 
 
@@ -163,9 +179,28 @@ Restore the value into the specified register increase the value of the stack po
 
 ## POP (To Memory)
 
-Restore the value at the top of the stack into the memory addressed by the Address Register
+Restore the value with the indicated size at the top of the stack into the memory addressed by the Address Register
 
 [SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 1 0 0    0x80000204         POP.DW (An)                     ?          None
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 1 0 0    0x00000204         POP.B  (An)                     ?          None
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 1 0 0    0x40000204         POP.W  (An)                     ?          None
+1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 0    0x80000204         POP.DW (An)                     ?          None
+
+## POP (To Memory Increment)
+
+Restore the value at the top of the stack into the memory address point to by the address register and increment it by the size of the operation.
+
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 1 0 0    0x00000404         POP.B  (An)+                    ?          None
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 1 0 0    0x40000404         POP.W  (An)+                    ?          None
 1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 1 0 0    0x80000404         POP.DW (An)+                    ?          None
+
+
+## Pop (To Memory Decrement)
+
+Restore the value at the top of the stack into the memory address pointed to by the address register and decrement it by the size of the operation
+
+[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 1 0 0    0x00000404         POP.B  (An)-                    ?          None
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 1 0 0    0x40000404         POP.W  (An)-                    ?          None
 1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 1 0 0    0x80000604         POP.DW (An)-                    ?          None
