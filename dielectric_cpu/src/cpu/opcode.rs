@@ -256,6 +256,27 @@ impl Execute for PushOpcode {
 
                 memory.memory_bus_write(write_command);
             }
+            PushOpcode {
+                addressing_mode: AddressingMode::MemoryDest,
+                source,
+                size,
+            } => {
+                todo!()
+            }
+            PushOpcode {
+                addressing_mode: AddressingMode::MemoryDestInc,
+                source,
+                size,
+            } => {
+                todo!()
+            }
+            PushOpcode {
+                addressing_mode: AddressingMode::MemoryDestDec,
+                source,
+                size,
+            } => {
+                todo!()
+            }
             _ => unreachable!(),
         }
     }
@@ -265,6 +286,7 @@ impl Execute for PushOpcode {
 pub struct PopOpcode {
     addressing_mode: AddressingMode,
     destination: Register,
+    size: OpcodeSize,
 }
 
 impl Execute for PopOpcode {
@@ -275,6 +297,36 @@ impl Execute for PopOpcode {
         status_register: &mut StatusRegister,
         memory: &mut Memory,
     ) {
-        todo!()
+        match self {
+            PopOpcode {
+                addressing_mode: AddressingMode::Atomic,
+                destination,
+                size,
+            } => {
+                todo!()
+            }
+            PopOpcode {
+                addressing_mode: AddressingMode::MemoryDest,
+                destination,
+                size,
+            } => {
+                todo!()
+            }
+            PopOpcode {
+                addressing_mode: AddressingMode::MemoryDestInc,
+                destination,
+                size,
+            } => {
+                todo!()
+            }
+            PopOpcode {
+                addressing_mode: AddressingMode::MemoryDestDec,
+                destination,
+                size,
+            } => {
+                todo!()
+            }
+            _ => unreachable!(),
+        }
     }
 }
