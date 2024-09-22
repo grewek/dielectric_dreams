@@ -10,6 +10,8 @@ use crate::{Memory, RegisterFile};
 pub enum Opcode {
     Move(MoveOpcode),
     Lea(LeaOpcode),
+    Push(PushOpcode),
+    Pop(PopOpcode),
     Unknown,
 }
 
@@ -24,6 +26,8 @@ impl Execute for Opcode {
         match self {
             Opcode::Move(data) => data.execute(pc, register_file, status_register, memory),
             Opcode::Lea(data) => data.execute(pc, register_file, status_register, memory),
+            Opcode::Push(data) => data.execute(pc, register_file, status_register, memory),
+            Opcode::Pop(data) => data.execute(pc, register_file, status_register, memory),
             Opcode::Unknown => todo!(),
         }
     }
@@ -206,4 +210,71 @@ pub(crate) trait Execute {
         status_register: &mut StatusRegister,
         memory: &mut Memory,
     );
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct PushOpcode {
+    addressing_mode: AddressingMode,
+    source: Register,
+    size: OpcodeSize,
+}
+
+impl Execute for PushOpcode {
+    fn execute(
+        &self,
+        pc: &mut u32,
+        register_file: &mut RegisterFile,
+        status_register: &mut StatusRegister,
+        memory: &mut Memory,
+    ) {
+        //TODO: For now we assume that SP is the A15 Register but the user should be able to move the sp?!
+        let stack_pointer = Register::A15;
+
+        match self {
+            PushOpcode {
+                addressing_mode: AddressingMode::Atomic,
+                source,
+                size,
+            } => {
+                let raw_value: u32 = register_file.read_value(source);
+                let data_to_write = size.retrieve_data(raw_value);
+                let write_command = size
+                    .memory_write_command(register_file.read_value(&stack_pointer), data_to_write);
+
+                memory.memory_bus_write(write_command);
+            }
+            PushOpcode {
+                addressing_mode: AddressingMode::Immediate,
+                source: _,
+                size,
+            } => {
+                *pc += 4;
+                let data_to_write = memory.memory_bus_read(size, *pc);
+
+                let write_command = size
+                    .memory_write_command(register_file.read_value(&stack_pointer), data_to_write);
+
+                memory.memory_bus_write(write_command);
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct PopOpcode {
+    addressing_mode: AddressingMode,
+    destination: Register,
+}
+
+impl Execute for PopOpcode {
+    fn execute(
+        &self,
+        pc: &mut u32,
+        register_file: &mut RegisterFile,
+        status_register: &mut StatusRegister,
+        memory: &mut Memory,
+    ) {
+        todo!()
+    }
 }
