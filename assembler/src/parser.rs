@@ -1,17 +1,78 @@
 use crate::lexer::{Token, TokenType, Tokenizer};
 use std::fmt;
 
-pub enum RegisterTypes {
+enum Opcode {
+    Nop = 0x00,
+    Move = 0x01,
+    Lea = 0x02,
+}
+
+struct OpcodeGrammar<'a> {
+    opcode: Opcode,
+    dest_reg_modes: &'a [RegisterModes],
+    dest_mem_modes: &'a [MemoryModes],
+
+    src_reg_modes: &'a [RegisterModes],
+    src_mem_modes: &'a [MemoryModes],
+}
+
+static OPCODE_GRAMMARS: [OpcodeGrammar; 3] = [
+    OpcodeGrammar {
+        opcode: Opcode::Nop,
+        dest_reg_modes: &[],
+        dest_mem_modes: &[],
+        src_reg_modes: &[],
+        src_mem_modes: &[],
+    },
+    OpcodeGrammar {
+        opcode: Opcode::Move,
+        dest_reg_modes: &[
+            RegisterModes::AddressRegisters,
+            RegisterModes::DataRegisters,
+        ],
+        dest_mem_modes: &[],
+        src_reg_modes: &[
+            RegisterModes::AddressRegisters,
+            RegisterModes::DataRegisters,
+        ],
+        src_mem_modes: &[
+            MemoryModes::Direct,
+            MemoryModes::DirectDec,
+            MemoryModes::DirectInc,
+            MemoryModes::ImmediateValue,
+        ],
+    },
+    OpcodeGrammar {
+        opcode: Opcode::Lea,
+        dest_reg_modes: &[],
+        dest_mem_modes: &[],
+        src_reg_modes: &[],
+        src_mem_modes: &[],
+    },
+];
+
+//TODO: Error recovery!
+pub enum RegisterModes {
     DataRegisters,
     AddressRegisters,
 }
 
-pub enum MemoryTypes {
+impl fmt::Display for RegisterModes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match self {
+            RegisterModes::DataRegisters => write!(f, "Data Register Target: D0..D15"),
+            RegisterModes::AddressRegisters => write!(f, "Address Register Target: A0..A15"),
+        }
+    }
+}
+
+pub enum MemoryModes {
     ImmediateValue,
     Direct,
     DirectInc,
     DirectDec,
 }
+
 #[derive(Debug)]
 pub enum ParserError {
     //TODO: I want more descriptive Errortypes which tell the user exactly what is wrong i.e. the opcode size.
@@ -19,6 +80,7 @@ pub enum ParserError {
     InvalidOpcodeSize(usize, usize, String),
     InvalidOperand(usize, usize, String),
     IllegalSize(usize, usize, String, String),
+    MissingSeperator(usize, usize, String, String),
 }
 
 impl fmt::Display for ParserError {
@@ -46,6 +108,13 @@ impl fmt::Display for ParserError {
                     f,
                     "{}:{}:the size '{}' is invalid for the given opcode.\nhint: {}",
                     line, position, got, message
+                )
+            }
+            ParserError::MissingSeperator(line, position, expected, got) => {
+                write!(
+                    f,
+                    "{}:{}:expected a '{}' between arguments of an opcode but got '{}'",
+                    line, position, expected, got
                 )
             }
         }
@@ -281,30 +350,30 @@ impl<'a> Parser<'a> {
 
     fn parse_register_arg(
         &mut self,
-        mode: &RegisterTypes,
+        mode: &RegisterModes,
         current_token: TokenType,
     ) -> Option<Ast<'a>> {
         match mode {
-            RegisterTypes::DataRegisters => self.match_data_register(current_token),
-            RegisterTypes::AddressRegisters => self.match_address_register(current_token),
+            RegisterModes::DataRegisters => self.match_data_register(current_token),
+            RegisterModes::AddressRegisters => self.match_address_register(current_token),
         }
     }
     fn parse_memory_arg(
         &mut self,
-        mode: &MemoryTypes,
+        mode: &MemoryModes,
         current_token: TokenType,
     ) -> Option<Ast<'a>> {
         match mode {
-            MemoryTypes::ImmediateValue => self.parse_immediate_value(current_token),
-            MemoryTypes::Direct => self.parse_direct(current_token),
-            MemoryTypes::DirectInc => self.parse_direct_inc(current_token),
-            MemoryTypes::DirectDec => self.parse_direct_dec(current_token),
+            MemoryModes::ImmediateValue => self.parse_immediate_value(current_token),
+            MemoryModes::Direct => self.parse_direct(current_token),
+            MemoryModes::DirectInc => self.parse_direct_inc(current_token),
+            MemoryModes::DirectDec => self.parse_direct_dec(current_token),
         }
     }
     fn parse_arg(
         &mut self,
-        register_types: &[RegisterTypes],
-        memory_types: &[MemoryTypes],
+        register_types: &[RegisterModes],
+        memory_types: &[MemoryModes],
     ) -> Result<Ast<'a>, ParserError> {
         let tt = self.curr_token.token_type();
 
@@ -327,7 +396,7 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    fn parse_move(&mut self) -> Result<Ast, ParserError> {
+    fn parse_move(&mut self, grammar: &OpcodeGrammar) -> Result<Ast, ParserError> {
         //Why are my parsers always so messy -.- how do i improve this...?!?
         if !self.match_token(TokenType::Dot) {
             return Err(ParserError::UnexpectedSymbol(
@@ -350,16 +419,10 @@ impl<'a> Parser<'a> {
             ));
         };
 
-        let dest_register = self.parse_arg(
-            &[
-                RegisterTypes::AddressRegisters,
-                RegisterTypes::DataRegisters,
-            ],
-            &[],
-        )?;
+        let dest_register = self.parse_arg(grammar.dest_reg_modes, grammar.dest_mem_modes)?;
 
         if !self.match_token(TokenType::Comma) {
-            return Err(ParserError::UnexpectedSymbol(
+            return Err(ParserError::MissingSeperator(
                 self.curr_token.get_line(),
                 self.curr_token.get_position(),
                 ",".to_string(),
@@ -367,18 +430,7 @@ impl<'a> Parser<'a> {
             ));
         }
 
-        let src_register = self.parse_arg(
-            &[
-                RegisterTypes::AddressRegisters,
-                RegisterTypes::DataRegisters,
-            ],
-            &[
-                MemoryTypes::Direct,
-                MemoryTypes::DirectDec,
-                MemoryTypes::DirectInc,
-                MemoryTypes::ImmediateValue,
-            ],
-        )?;
+        let src_register = self.parse_arg(grammar.src_reg_modes, grammar.src_mem_modes)?;
 
         Ok(Ast::Move {
             size: Box::new(size_ast),
@@ -387,7 +439,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_lea(&mut self) -> Result<Ast, ParserError> {
+    fn parse_lea(&mut self, grammar: &OpcodeGrammar) -> Result<Ast, ParserError> {
         if !self.match_token(TokenType::Dot) {
             return Err(ParserError::UnexpectedSymbol(
                 self.curr_token.get_line(),
@@ -408,10 +460,10 @@ impl<'a> Parser<'a> {
             ));
         }
 
-        let dest_register = self.parse_arg(&[RegisterTypes::AddressRegisters], &[])?;
+        let dest_register = self.parse_arg(&[RegisterModes::AddressRegisters], &[])?;
 
         if !self.match_token(TokenType::Comma) {
-            return Err(ParserError::UnexpectedSymbol(
+            return Err(ParserError::MissingSeperator(
                 self.curr_token.get_line(),
                 self.curr_token.get_position(),
                 ",".to_string(),
@@ -419,7 +471,7 @@ impl<'a> Parser<'a> {
             ));
         }
 
-        let src_register = self.parse_arg(&[], &[MemoryTypes::ImmediateValue])?;
+        let src_register = self.parse_arg(&[], &[MemoryModes::ImmediateValue])?;
 
         Ok(Ast::Lea {
             dest: Box::new(dest_register),
@@ -448,11 +500,11 @@ impl<'a> Parser<'a> {
             TokenType::Identifier => self.parse_label_definition(),
             TokenType::Move => {
                 self.advance();
-                self.parse_move()
+                self.parse_move(&OPCODE_GRAMMARS[Opcode::Move as usize])
             }
             TokenType::Lea => {
                 self.advance();
-                self.parse_lea()
+                self.parse_lea(&OPCODE_GRAMMARS[Opcode::Lea as usize])
             }
             TokenType::Nop => {
                 self.advance();

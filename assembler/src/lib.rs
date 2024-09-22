@@ -126,7 +126,8 @@ impl Assembler {
                 Ok(Ast::ProgramEnd) => return,
                 Ok(ast) => ast,
                 Err(e) => {
-                    panic!("ERROR: {}", e);
+                    todo!()
+                    //panic!("ERROR: {}:{}:{}", e.line, e.position, e.message);
                 }
             };
 
