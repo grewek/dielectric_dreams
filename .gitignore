@@ -1,1 +1,9 @@
+.vscode/
+
 /target
+**/bin
+
+*.asm
+*.o
+
+krisp/output
