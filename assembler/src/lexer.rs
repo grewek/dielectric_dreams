@@ -18,6 +18,8 @@ pub enum TokenType {
     Move,
     Lea,
     Nop,
+    Push,
+    Pop,
 
     Byte,
     Word,
@@ -105,6 +107,8 @@ impl<'a> Token<'a> {
             "nop" => TokenType::Nop,
             "move" => TokenType::Move,
             "lea" => TokenType::Lea,
+            "push" => TokenType::Push,
+            "pop" => TokenType::Pop,
             "b" => TokenType::Byte,
             "w" => TokenType::Word,
             "dw" => TokenType::Dword,
