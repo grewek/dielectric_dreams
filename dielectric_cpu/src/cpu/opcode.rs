@@ -236,12 +236,17 @@ impl Execute for PushOpcode {
                 source,
                 size,
             } => {
+                //Read the value to push
                 let raw_value: u32 = register_file.read_value(source);
                 let data_to_write = size.retrieve_data(raw_value);
+                //Write the value into the position indicated by the stack pointer
                 let write_command = size
                     .memory_write_command(register_file.read_value(&stack_pointer), data_to_write);
-
                 memory.memory_bus_write(write_command);
+
+                //update the stack pointer to the next available address
+                let stack_ptr_value = register_file.read_value(&stack_pointer);
+                register_file.write_value(&stack_pointer, stack_ptr_value - size.size_in_bytes());
             }
             PushOpcode {
                 addressing_mode: AddressingMode::Immediate,
@@ -253,8 +258,10 @@ impl Execute for PushOpcode {
 
                 let write_command = size
                     .memory_write_command(register_file.read_value(&stack_pointer), data_to_write);
-
                 memory.memory_bus_write(write_command);
+
+                let stack_ptr_value = register_file.read_value(&stack_pointer);
+                register_file.write_value(&stack_pointer, stack_ptr_value - size.size_in_bytes());
             }
             PushOpcode {
                 addressing_mode: AddressingMode::MemoryDest,
@@ -266,8 +273,10 @@ impl Execute for PushOpcode {
 
                 let write_command =
                     size.memory_write_command(register_file.read_value(&stack_pointer), value);
-
                 memory.memory_bus_write(write_command);
+
+                let stack_ptr_value = register_file.read_value(&stack_pointer);
+                register_file.write_value(&stack_pointer, stack_ptr_value - size.size_in_bytes());
             }
             PushOpcode {
                 addressing_mode: AddressingMode::MemoryDestInc,
@@ -282,6 +291,9 @@ impl Execute for PushOpcode {
 
                 memory.memory_bus_write(write_command);
                 register_file.write_value(source, address + size.size_in_bytes());
+
+                let stack_ptr_value = register_file.read_value(&stack_pointer);
+                register_file.write_value(&stack_pointer, stack_ptr_value - size.size_in_bytes());
             }
             PushOpcode {
                 addressing_mode: AddressingMode::MemoryDestDec,
@@ -296,6 +308,9 @@ impl Execute for PushOpcode {
 
                 memory.memory_bus_write(write_command);
                 register_file.write_value(source, address - size.size_in_bytes());
+
+                let stack_ptr_value = register_file.read_value(&stack_pointer);
+                register_file.write_value(&stack_pointer, stack_ptr_value - size.size_in_bytes())
             }
             _ => unreachable!(),
         }
