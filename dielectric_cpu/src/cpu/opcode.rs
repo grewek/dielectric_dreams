@@ -227,6 +227,7 @@ impl Execute for PushOpcode {
         status_register: &mut StatusRegister,
         memory: &mut Memory,
     ) {
+        //TODO: Messy code is messy
         //TODO: For now we assume that SP is the A15 Register but the user should be able to move the sp?!
         let stack_pointer = Register::A15;
 
@@ -332,34 +333,67 @@ impl Execute for PopOpcode {
         status_register: &mut StatusRegister,
         memory: &mut Memory,
     ) {
+        let stack_pointer = Register::A15;
+
         match self {
             PopOpcode {
                 addressing_mode: AddressingMode::Atomic,
                 destination,
                 size,
             } => {
-                todo!()
+                let address = register_file.read_value(&stack_pointer);
+                let value = memory.memory_bus_read(size, address);
+
+                register_file.write_value(destination, value);
+
+                let stack_ptr_value = register_file.read_value(&stack_pointer);
+                register_file.write_value(&stack_pointer, stack_ptr_value + size.size_in_bytes());
             }
             PopOpcode {
                 addressing_mode: AddressingMode::MemoryDest,
                 destination,
                 size,
             } => {
-                todo!()
+                let address = register_file.read_value(&stack_pointer);
+                let value = memory.memory_bus_read(size, address);
+
+                let target_address = register_file.read_value(destination);
+                size.memory_write_command(target_address, value);
+
+                let stack_ptr_value = register_file.read_value(&stack_pointer);
+                register_file.write_value(&stack_pointer, stack_ptr_value + size.size_in_bytes());
             }
             PopOpcode {
                 addressing_mode: AddressingMode::MemoryDestInc,
                 destination,
                 size,
             } => {
-                todo!()
+                let address = register_file.read_value(&stack_pointer);
+                let value = memory.memory_bus_read(size, address);
+
+                let target_address = register_file.read_value(destination);
+                size.memory_write_command(target_address, value);
+
+                register_file.write_value(destination, target_address + size.size_in_bytes());
+
+                let stack_ptr_value = register_file.read_value(&stack_pointer);
+                register_file.write_value(&stack_pointer, stack_ptr_value + size.size_in_bytes());
             }
             PopOpcode {
                 addressing_mode: AddressingMode::MemoryDestDec,
                 destination,
                 size,
             } => {
-                todo!()
+                let address = register_file.read_value(&stack_pointer);
+                let value = memory.memory_bus_read(size, address);
+
+                let target_address = register_file.read_value(destination);
+                size.memory_write_command(target_address, value);
+
+                register_file.write_value(destination, target_address - size.size_in_bytes());
+
+                let stack_ptr_value = register_file.read_value(&stack_pointer);
+                register_file.write_value(&stack_pointer, stack_ptr_value + size.size_in_bytes());
             }
             _ => unreachable!(),
         }
