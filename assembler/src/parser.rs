@@ -5,6 +5,7 @@ enum Opcode {
     Nop = 0x00,
     Move = 0x01,
     Lea = 0x02,
+    Push = 0x03,
 }
 
 struct OpcodeGrammar<'a> {
@@ -16,7 +17,7 @@ struct OpcodeGrammar<'a> {
     src_mem_modes: &'a [MemoryModes],
 }
 
-static OPCODE_GRAMMARS: [OpcodeGrammar; 3] = [
+static OPCODE_GRAMMARS: [OpcodeGrammar; 4] = [
     OpcodeGrammar {
         opcode: Opcode::Nop,
         dest_reg_modes: &[],
@@ -46,6 +47,20 @@ static OPCODE_GRAMMARS: [OpcodeGrammar; 3] = [
         opcode: Opcode::Lea,
         dest_reg_modes: &[],
         dest_mem_modes: &[],
+        src_reg_modes: &[],
+        src_mem_modes: &[],
+    },
+    OpcodeGrammar {
+        opcode: Opcode::Push,
+        dest_reg_modes: &[
+            RegisterModes::DataRegisters,
+            RegisterModes::AddressRegisters,
+        ],
+        dest_mem_modes: &[
+            MemoryModes::Direct,
+            MemoryModes::DirectInc,
+            MemoryModes::DirectDec,
+        ],
         src_reg_modes: &[],
         src_mem_modes: &[],
     },
@@ -140,6 +155,9 @@ pub enum Ast<'a> {
     Lea {
         dest: Box<Ast<'a>>,
         src: Box<Ast<'a>>,
+    },
+    Push {
+        dest: Box<Ast<'a>>,
     },
 
     Size {
@@ -479,6 +497,10 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn parse_push(&mut self, grammar: &OpcodeGrammar) -> Result<Ast, ParserError> {
+        todo!()
+    }
+
     fn parse_label_definition(&mut self) -> Result<Ast, ParserError> {
         let label = self.curr_token;
         self.advance();
@@ -512,6 +534,10 @@ impl<'a> Parser<'a> {
                 Ok(Ast::Nop {
                     repr: self.curr_token,
                 })
+            }
+            TokenType::Push => {
+                self.advance();
+                self.parse_push(&OPCODE_GRAMMARS[Opcode::Push as usize])
             }
             TokenType::EndOfFile => Ok(Ast::ProgramEnd),
             _ => todo!(),
