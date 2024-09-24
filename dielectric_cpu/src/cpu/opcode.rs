@@ -261,21 +261,41 @@ impl Execute for PushOpcode {
                 source,
                 size,
             } => {
-                todo!()
+                let address = register_file.read_value(source);
+                let value = memory.memory_bus_read(size, address);
+
+                let write_command =
+                    size.memory_write_command(register_file.read_value(&stack_pointer), value);
+
+                memory.memory_bus_write(write_command);
             }
             PushOpcode {
                 addressing_mode: AddressingMode::MemoryDestInc,
                 source,
                 size,
             } => {
-                todo!()
+                let address = register_file.read_value(source);
+                let value = memory.memory_bus_read(size, address);
+
+                let write_command =
+                    size.memory_write_command(register_file.read_value(&stack_pointer), value);
+
+                memory.memory_bus_write(write_command);
+                register_file.write_value(source, address + size.size_in_bytes());
             }
             PushOpcode {
                 addressing_mode: AddressingMode::MemoryDestDec,
                 source,
                 size,
             } => {
-                todo!()
+                let address = register_file.read_value(source);
+                let value = memory.memory_bus_read(size, address);
+
+                let write_command =
+                    size.memory_write_command(register_file.read_value(&stack_pointer), value);
+
+                memory.memory_bus_write(write_command);
+                register_file.write_value(source, address - size.size_in_bytes());
             }
             _ => unreachable!(),
         }
