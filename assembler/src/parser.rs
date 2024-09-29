@@ -57,6 +57,7 @@ static OPCODE_GRAMMARS: [OpcodeGrammar; 4] = [
             RegisterModes::AddressRegisters,
         ],
         dest_mem_modes: &[
+            MemoryModes::ImmediateValue,
             MemoryModes::Direct,
             MemoryModes::DirectInc,
             MemoryModes::DirectDec,
@@ -157,6 +158,7 @@ pub enum Ast<'a> {
         src: Box<Ast<'a>>,
     },
     Push {
+        size: Box<Ast<'a>>,
         dest: Box<Ast<'a>>,
     },
 
@@ -166,7 +168,7 @@ pub enum Ast<'a> {
 
     MemoryTarget {
         repr: Token<'a>,
-        operation: Token<'a>,
+        operation: Option<Token<'a>>,
     },
     Plus {
         repr: Token<'a>,
@@ -355,7 +357,28 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_direct(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
-        None
+        let tt = self.curr_token.token_type();
+
+        if !self.match_token(TokenType::OpenParen) {
+            return None;
+        }
+
+        if self
+            .match_address_register(self.curr_token.token_type())
+            .is_some()
+        {
+            let t = self.curr_token;
+            if !self.match_token(TokenType::CloseParen) {
+                return None;
+            }
+
+            return Some(Ast::MemoryTarget {
+                repr: t,
+                operation: None,
+            });
+        } else {
+            return None;
+        }
     }
 
     fn parse_direct_inc(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
@@ -498,7 +521,33 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_push(&mut self, grammar: &OpcodeGrammar) -> Result<Ast, ParserError> {
-        todo!()
+        if !self.match_token(TokenType::Dot) {
+            return Err(ParserError::UnexpectedSymbol(
+                self.curr_token.get_line(),
+                self.curr_token.get_position(),
+                ".".to_string(),
+                self.curr_token.get_repr().to_string(),
+            ));
+        }
+
+        let tt = self.curr_token.token_type();
+        //Next up we match the Size of the Move Opcode
+        let size: Ast = if let Some(ast) = self.match_size(tt) {
+            ast
+        } else {
+            return Err(ParserError::InvalidOpcodeSize(
+                self.curr_token.get_line(),
+                self.curr_token.get_position(),
+                self.curr_token.get_repr().to_string(),
+            ));
+        };
+
+        let dest = self.parse_arg(grammar.dest_reg_modes, grammar.dest_mem_modes)?;
+
+        Ok(Ast::Push {
+            size: Box::new(size),
+            dest: Box::new(dest),
+        })
     }
 
     fn parse_label_definition(&mut self) -> Result<Ast, ParserError> {
@@ -631,6 +680,63 @@ mod test {
                 assert!(matches!(size.as_ref(), Ast::Size { .. }));
                 assert!(matches!(dest.as_ref(), Ast::Register { .. }));
                 assert!(matches!(src.as_ref(), Ast::Number { .. }));
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn test_parse_push_immediate_value() {
+        let source = "push.dw $AABBCCDD";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+
+        assert!(matches!(node, Ok(Ast::Push { .. })));
+
+        match node {
+            Ok(Ast::Push { size, dest }) => {
+                assert!(matches!(size.as_ref(), Ast::Size { .. }));
+                assert!(matches!(dest.as_ref(), Ast::Number { .. }));
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn test_parse_push_register() {
+        let source = "push.dw d0";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+
+        assert!(matches!(node, Ok(Ast::Push { .. })));
+
+        match node {
+            Ok(Ast::Push { size, dest }) => {
+                assert!(matches!(size.as_ref(), Ast::Size { .. }));
+                assert!(matches!(dest.as_ref(), Ast::Register { .. }));
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn test_parse_push_memory() {
+        let source = "push.dw (a0)";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+
+        assert!(matches!(node, Ok(Ast::Push { .. })));
+
+        match node {
+            Ok(Ast::Push { size, dest }) => {
+                assert!(matches!(size.as_ref(), Ast::Size { .. }));
+                assert!(matches!(dest.as_ref(), Ast::MemoryTarget { .. }));
             }
             _ => unreachable!(),
         }
