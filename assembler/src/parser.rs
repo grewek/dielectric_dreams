@@ -168,7 +168,7 @@ pub enum Ast<'a> {
 
     MemoryTarget {
         repr: Token<'a>,
-        operation: Option<Token<'a>>,
+        operation: Box<Option<Ast<'a>>>,
     },
     Plus {
         repr: Token<'a>,
@@ -351,6 +351,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    //TODO: Use result types here! why did i use options in the first place ?!
     fn parse_immediate_value(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
         let tt = self.curr_token.token_type();
         self.match_number_type(tt)
@@ -372,22 +373,68 @@ impl<'a> Parser<'a> {
                 return None;
             }
 
+            if self.match_token(TokenType::Plus) {
+                return Some(Ast::MemoryTarget {
+                    repr: t,
+                    operation: Box::new(Some(Ast::Plus {
+                        repr: self.curr_token,
+                    })),
+                });
+            }
+
+            //TODO: Support for minus operations!
+            /*if self.match_token(Token::Minus) {
+                return Some(Ast::MemoryTarget {
+                    repr: t,
+                    operation: Box::new(Some(Ast::Plus {
+                        repr: self.curr_token,
+                    })),
+                });
+            }*/
+
             return Some(Ast::MemoryTarget {
                 repr: t,
-                operation: None,
+                operation: Box::new(None),
             });
         } else {
             return None;
         }
     }
 
-    fn parse_direct_inc(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
-        None
-    }
+    /*fn parse_direct_inc(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        let tt = self.curr_token.token_type();
 
-    fn parse_direct_dec(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
+        if !self.match_token(TokenType::OpenParen) {
+            return None;
+        }
+
+        if self
+            .match_address_register(self.curr_token.token_type())
+            .is_some()
+        {
+            let dest = self.curr_token;
+            if !self.match_token(TokenType::CloseParen) {
+                return None;
+            }
+
+            if !self.match_token(TokenType::Plus) {
+                return None;
+            }
+
+            return Some(Ast::MemoryTarget {
+                repr: dest,
+                operation: Box::new(Some(Ast::Plus {
+                    repr: self.curr_token,
+                })),
+            });
+        } else {
+            return None;
+        }
+    }*/
+
+    /*fn parse_direct_dec(&mut self, current_token: TokenType) -> Option<Ast<'a>> {
         None
-    }
+    }*/
 
     fn parse_register_arg(
         &mut self,
@@ -406,9 +453,9 @@ impl<'a> Parser<'a> {
     ) -> Option<Ast<'a>> {
         match mode {
             MemoryModes::ImmediateValue => self.parse_immediate_value(current_token),
-            MemoryModes::Direct => self.parse_direct(current_token),
-            MemoryModes::DirectInc => self.parse_direct_inc(current_token),
-            MemoryModes::DirectDec => self.parse_direct_dec(current_token),
+            _ => self.parse_direct(current_token),
+            //MemoryModes::DirectInc => self.parse_direct_inc(current_token),
+            //MemoryModes::DirectDec => self.parse_direct_dec(current_token),
         }
     }
     fn parse_arg(
@@ -737,6 +784,33 @@ mod test {
             Ok(Ast::Push { size, dest }) => {
                 assert!(matches!(size.as_ref(), Ast::Size { .. }));
                 assert!(matches!(dest.as_ref(), Ast::MemoryTarget { .. }));
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn test_parse_push_memory_inc() {
+        let source = "push.dw (a0)+";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+
+        assert!(matches!(node, Ok(Ast::Push { .. })));
+
+        match node {
+            Ok(Ast::Push { size, dest }) => {
+                assert!(matches!(size.as_ref(), Ast::Size { .. }));
+                assert!(matches!(dest.as_ref(), Ast::MemoryTarget { .. }));
+
+                let dest = dest.as_ref();
+                match dest {
+                    Ast::MemoryTarget { repr: _, operation } => {
+                        assert!(matches!(operation.as_ref(), Some(Ast::Plus { .. })))
+                    }
+                    _ => unreachable!(),
+                }
             }
             _ => unreachable!(),
         }
