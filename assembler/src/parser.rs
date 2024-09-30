@@ -383,14 +383,14 @@ impl<'a> Parser<'a> {
             }
 
             //TODO: Support for minus operations!
-            /*if self.match_token(Token::Minus) {
+            if self.match_token(TokenType::Minus) {
                 return Some(Ast::MemoryTarget {
                     repr: t,
-                    operation: Box::new(Some(Ast::Plus {
+                    operation: Box::new(Some(Ast::Minus {
                         repr: self.curr_token,
                     })),
                 });
-            }*/
+            }
 
             return Some(Ast::MemoryTarget {
                 repr: t,
@@ -808,6 +808,33 @@ mod test {
                 match dest {
                     Ast::MemoryTarget { repr: _, operation } => {
                         assert!(matches!(operation.as_ref(), Some(Ast::Plus { .. })))
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn test_parse_push_memory_dec() {
+        let source = "push.dw (a0)-";
+
+        let mut parser = Parser::new(source);
+
+        let node = parser.parse();
+
+        assert!(matches!(node, Ok(Ast::Push { .. })));
+
+        match node {
+            Ok(Ast::Push { size, dest }) => {
+                assert!(matches!(size.as_ref(), Ast::Size { .. }));
+                assert!(matches!(dest.as_ref(), Ast::MemoryTarget { .. }));
+
+                let dest = dest.as_ref();
+                match dest {
+                    Ast::MemoryTarget { repr: _, operation } => {
+                        assert!(matches!(operation.as_ref(), Some(Ast::Minus { .. })))
                     }
                     _ => unreachable!(),
                 }
