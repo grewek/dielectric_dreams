@@ -146,6 +146,8 @@ Push a value that is inside a data/address register
 Push a value that is pointed to by an address register
 
 [SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 1 1    0x00000203         PUSH.B  (An)
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 1 1    0x40000203         PUSH.W  (An)
 1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 1 1    0x80000203         PUSH.DW (An)                   ?          None
 
 ## PUSH (From Memory Increment)
@@ -153,18 +155,18 @@ Push a value that is pointed to by an address register
 Push the value that is pointed to by an address register onto the stack, the address register will increase by the indicated size after the operation
 
 [SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x00000403         PUSH.B  (An)+                  ?          None
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x40000403         PUSH.W  (An)+                  ?          None
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x80000403         PUSH.DW (An)+                  ?          None
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 1 1    0x00000303         PUSH.B  (An)+                  ?          None
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 1 1    0x40000303         PUSH.W  (An)+                  ?          None
+1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 1 1    0x80000303         PUSH.DW (An)+                  ?          None
 
 ## PUSH (From Memory Decrement)
 
 Push the value that is pointed to by an address register onto the stack, the address register will decrease by the indicated size after the operation
 
 [SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 1 1    0x00000603         PUSH.B  (An)-                  ?          None
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 1 1    0x40000603         PUSH.W  (An)-                  ?          None
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 1 1    0x80000603         PUSH.DW (An)-                  ?          None
+0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x00000403         PUSH.B  (An)-                  ?          None
+0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x40000403         PUSH.W  (An)-                  ?          None
+1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x80000403         PUSH.DW (An)-                  ?          None
 
 
 ## POP (To Register)
