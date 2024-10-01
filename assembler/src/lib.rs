@@ -60,7 +60,12 @@ impl Assembler {
     }
     pub fn encode_dest(ast: &Ast) -> u32 {
         match ast {
-            Ast::MemoryTarget { repr, operation } => todo!(),
+            Ast::MemoryTarget { repr: _, operation } => match operation.as_ref() {
+                Some(Ast::Plus { repr: _ }) => (3 << 8) as u32,
+                Some(Ast::Minus { repr: _ }) => (4 << 8) as u32,
+                Option::None => (1 << 9) as u32,
+                _ => unreachable!(),
+            },
             Ast::Register { repr } => Assembler::encode_register(repr.token_type()) << 14,
             Ast::Number { repr } => todo!(),
             _ => unreachable!(),
@@ -97,9 +102,9 @@ impl Assembler {
         match ast {
             Ast::Size { repr } => {
                 match repr.token_type() {
-                    TokenType::Byte => 0x00 << 29,
-                    TokenType::Word => 0x01 << 29,
-                    TokenType::Dword => 0x02 << 29,
+                    TokenType::Byte => 0x00 << 30,
+                    TokenType::Word => 0x01 << 30,
+                    TokenType::Dword => 0x02 << 30,
                     //NOTE: Until this point all possible errors have been handled
                     //      if we reach this it would be a bug!
                     _ => unreachable!(),
@@ -113,6 +118,7 @@ impl Assembler {
         match tt {
             TokenType::Move => 0x01,
             TokenType::Lea => 0x02,
+            TokenType::Push => 0x03,
             _ => unreachable!(),
         }
     }
@@ -148,7 +154,7 @@ impl Assembler {
                 Ast::Move { size, dest, src } => {
                     let opcode = Assembler::generate_operation_opcode(TokenType::Move);
                     let size = Assembler::generate_operation_size(size.as_ref());
-                    let dest = Assembler::encode_dest(dest.as_ref());
+                    let dest: u32 = Assembler::encode_dest(dest.as_ref());
                     //let src = Assembler::encode_source(src.as_ref());
                     let (src, additional_data) = Assembler::encode_source(src.as_ref());
 
@@ -176,6 +182,14 @@ impl Assembler {
                 Ast::Lea { dest, src } => todo!(),
                 Ast::Nop { repr } => {
                     assembled.push(0x00000000);
+                }
+                Ast::Push { size, dest } => {
+                    let opcode = Assembler::generate_operation_opcode(TokenType::Push);
+                    let size = Assembler::generate_operation_size(size.as_ref());
+                    let dest = Assembler::encode_dest(dest.as_ref());
+                    let result = size | dest | opcode;
+
+                    assembled.push(result);
                 }
                 _ => todo!(),
             }
