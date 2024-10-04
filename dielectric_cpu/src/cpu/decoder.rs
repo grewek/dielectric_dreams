@@ -1,7 +1,7 @@
 use std::fmt::{Binary, Display, LowerHex};
 
 use super::{
-    opcode::{LeaOpcode, MoveOpcode, Opcode},
+    opcode::{LeaOpcode, MoveOpcode, Opcode, PushOpcode},
     opcode_size::OpcodeSize,
     register::Register,
 };
@@ -77,6 +77,11 @@ impl From<BitPattern> for Opcode {
             }),
             0x02 => Opcode::Lea(LeaOpcode {
                 destination: Register::new(value.dest_reg),
+            }),
+            0x03 => Opcode::Push(PushOpcode {
+                addressing_mode: value.addr_mode.into(),
+                source: Register::new(value.src_reg),
+                size: OpcodeSize::new(value.size),
             }),
 
             _ => Opcode::Unknown,
