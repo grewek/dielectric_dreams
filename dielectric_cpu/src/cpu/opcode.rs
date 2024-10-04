@@ -214,9 +214,9 @@ pub(crate) trait Execute {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PushOpcode {
-    addressing_mode: AddressingMode,
-    source: Register,
-    size: OpcodeSize,
+    pub addressing_mode: AddressingMode,
+    pub source: Register,
+    pub size: OpcodeSize,
 }
 
 impl Execute for PushOpcode {
