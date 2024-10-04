@@ -122,14 +122,14 @@ impl Assembler {
             _ => unreachable!(),
         }
     }
-    pub fn assemble(&mut self, source: &str) {
+    pub fn assemble(&mut self, source: &str) -> Vec<u32> {
         let mut assembled: Vec<u32> = vec![];
         let mut parser = Parser::new(source);
 
         let mut current_position_in_bytes = 0;
         loop {
             let ast = match parser.parse() {
-                Ok(Ast::ProgramEnd) => return,
+                Ok(Ast::ProgramEnd) => break,
                 Ok(ast) => ast,
                 Err(e) => {
                     todo!()
@@ -195,8 +195,9 @@ impl Assembler {
             }
             current_position_in_bytes += 4;
             //println!("{:?}", to_parse);
-
-            println!("{:#x?}", assembled);
         }
+
+        println!("{:#x?}", assembled);
+        assembled
     }
 }
