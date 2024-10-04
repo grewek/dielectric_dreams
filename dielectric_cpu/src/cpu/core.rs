@@ -1,5 +1,6 @@
 use super::decoder::BitPattern;
 use super::opcode::Opcode;
+use super::register::Register;
 use crate::cpu::opcode::Execute;
 use crate::cpu::status_register::StatusRegister;
 use crate::Memory;
@@ -21,17 +22,29 @@ impl Default for Cpu {
 
 impl Cpu {
     pub fn new() -> Self {
-        Self {
+        let mut machine = Self {
             register_file: RegisterFile::new(),
             memory: Memory::new(),
             status_register: StatusRegister::new(),
             pc: 0,
-        }
+        };
+
+        //TODO: This is temporary, we currently don't handle under/overflows of values so we would crash if the stack pointer
+        //      is at position 0
+        machine.register_file.write_value(&Register::A15, 0x1000);
+
+        machine
     }
 
     pub fn decoder(&self, to_decode: u32) -> Opcode {
         let raw_opcode = BitPattern::new(to_decode);
         raw_opcode.into()
+    }
+
+    pub fn load_bytes_into_memory_debug(&mut self, bytes: &[u8]) {
+        for (idx, byte) in bytes.iter().enumerate() {
+            self.memory.write_byte(idx as u32, *byte);
+        }
     }
 
     pub fn cycle(&mut self) {
@@ -51,6 +64,8 @@ impl Cpu {
             &mut self.status_register,
             &mut self.memory,
         );
+
+        self.pc += 4;
     }
 }
 
