@@ -1,0 +1,11 @@
+push.b (a0)
+push.b (a0)+
+push.b (a0)-
+
+push.w (a1)
+push.w (a1)+
+push.w (a1)-
+
+push.dw (a2)
+push.dw (a2)+
+push.dw (a2)-
