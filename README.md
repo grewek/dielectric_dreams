@@ -3,6 +3,7 @@
 A Fantasy Computer/Console 
 
 ## Plans
+
 This project will combine everything that i like to fiddle with i.e. Architecture of CPUs, Operating Systems, Compilers and probably other stuff
 my rough plan is (if i will ever finish it...):
 
@@ -11,11 +12,26 @@ my rough plan is (if i will ever finish it...):
 3. Make Tools available, compilers, sprite editors (think of picotron)
 4. Make it runnable on a FPGA
 
+## ISA
+
+The ISA is in a bad shape right now, i want to clean it up and make it non orthogonal as i learned that orthogonality
+in opcodes is a think of the past. Also i need to move the Opcodes in the High Bits of the ISA.
+
+## Emulation
+
+The Emulation Layer will probably be completely rewritten due to the changes on the ISA, i hope to make it easier to
+read in the long run.
+
+## Assembler
+
+The Assembler should also be changed, and i need it as early as possible, because testing these things manually and assemble
+from scratch is a nightmare which i don't want to do again...
+
 # Projects
 
 # Dielectric Cpu
 
-This is the project that contains the actual cpu emulation will grow over time
+This is the project that contains the actual cpu emulation it will grow over time
 
 # Dielectric ISA generator
 
@@ -24,12 +40,6 @@ Helpful tool in generating all possible opcodes quickly
 # assembler
 
 The assembler for my ISA
-
-# KRISP
-
-A Lisp like low-level language which can be simulated and compiled to either x86-64 or dd ISA.
-
-This thing will be written in C as i need some change in language now and then. 
 
 
 ## Resources
