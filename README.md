@@ -15,7 +15,7 @@ my rough plan is (if i will ever finish it...):
 ## ISA
 
 The ISA is in a bad shape right now, i want to clean it up and make it non orthogonal as i learned that orthogonality
-in opcodes is a think of the past. Also i need to move the Opcodes in the High Bits of the ISA.
+in opcodes is a thing of the past. Also i need to move the Opcodes in the High Bits of the ISA.
 
 ## Emulation
 
