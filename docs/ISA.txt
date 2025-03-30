@@ -29,28 +29,32 @@ MemorySrcDec - Memory Source into Register decrement Address of source register.
   Imm8 = Immediate Byte value.
   Imm16 = Immediate Word value.
   Imm32 = Immediate Dword value.
-  Dn = D0-15
-  An = A0-15
+  Dn = D0-31
 
 ## NOOP
 
 ### Description
 Does nothing. Waits for one cycle and resumes execution!
 
-BINARY REPR                                                              HEXDUMP            OPCODE                   CYCLES      FLAGS
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ OPCODE                     ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0   0x00000000         NOOP                      1           None
+Flags are unchanged
 
-## MOVE(Atomic Mode)
+BINARY REPR                                                                    HEXDUMP            OPCODE                   CYCLES      FLAGS
+32.......................21 20..........................................1
+[         OPCODE          ] [                   UNUSED                  ]
+[0 0 0 0  0 0 0 0  0 0 0 0] [0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0]      0x00000000         NOOP                     1           *  
 
-Copies the value in the source register into the destination register. Sets the Zero and Negative flags in accordance to the copied value.
+## MOV(Register)
 
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x00000001         MOVE.B  Dn/An,Dn/An       1           Z,N
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x40000001         MOVE.W  Dn/An,Dn/An       1           Z,N
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1   0x80000001         MOVE.DW Dn/An,Dn/An       1           Z,N
+Copies the value in the source register into the destination register. Always copies the full content of a register.
 
-## MOVE(Immediate)
+Flags are unchanged
+
+BINARY REPR                                                                          HEXDUMP            OPCODE                   CYCLES      FLAGS
+32.......................21  20........16  15........11  10....................1
+[         OPCODE          ]  [  SOURCE  ]  [   DEST   ]  [     UNUSED          ]
+[0 0 0 0  0 0 0 0  0 0 0 1]  [0 0 0 0  0]  [0 0 0  0 0]  [0 0  0 0 0 0  0 0 0 1]     0x00200000        MOVE  Dn,Dn               1           *
+
+## MOVI(Immediate)
 
 Copies the value from Memory into the destination register. Byte values are contained inside the Opcode itself!
 
@@ -59,7 +63,7 @@ Copies the value from Memory into the destination register. Byte values are cont
 0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1  0 0 0 0  0 0 0 1   0x40000101         MOVE.W  Dn/An,#Imm16       ?           Z,N
 1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1  0 0 0 0  0 0 0 1   0x80000101         MOVE.DW Dn/An,#Imm32       ?           Z,N
 
-## MOVE(Memory Destination)
+## STR(Memory Destination)
 
 Moves the value of a source register into the memory that is specified by the destination register. 
 
@@ -68,7 +72,7 @@ Moves the value of a source register into the memory that is specified by the de
 0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 1    0x40000201         MOVE.W  (An),Dn             ?          Z,N(?)
 1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 1    0x80000201         MOVE.DW (An),Dn             ?          Z,N(?)
 
-## MOVE(Memory Source)
+## LDR(Memory Source)
 
 Moves a value from memory pointed to by an address register into the specified data register.
 
