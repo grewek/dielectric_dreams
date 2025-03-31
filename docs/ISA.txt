@@ -36,8 +36,6 @@ MemorySrcDec - Memory Source into Register decrement Address of source register.
 ### Description
 Does nothing. Waits for one cycle and resumes execution!
 
-Flags are unchanged
-
 BINARY REPR                                                                    HEXDUMP            OPCODE                   CYCLES      FLAGS
 32.......................21 20..........................................1
 [         OPCODE          ] [                   UNUSED                  ]
@@ -45,32 +43,57 @@ BINARY REPR                                                                    H
 
 ## MOV(Register)
 
-Copies the value in the source register into the destination register. Always copies the full content of a register.
-
-Flags are unchanged
+Move - Copies the value in the source register into the destination register. Always copies the full content of a register.
 
 BINARY REPR                                                                          HEXDUMP            OPCODE                   CYCLES      FLAGS
 32.......................21  20........16  15........11  10....................1
 [         OPCODE          ]  [  SOURCE  ]  [   DEST   ]  [     UNUSED          ]
-[0 0 0 0  0 0 0 0  0 0 0 1]  [0 0 0 0  0]  [0 0 0  0 0]  [0 0  0 0 0 0  0 0 0 1]     0x00200000        MOVE  Dn,Dn               1           *
+[0 0 0 0  0 0 0 0  0 0 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0 0 0 0 0  0]     0x00200000         MOVE  Dn,Dn               1           *
 
-## MOVI(Immediate)
+## MOVQ
 
-Copies the value from Memory into the destination register. Byte values are contained inside the Opcode itself!
+Move Quick - Moves a 15-bit Value that is encoded in the instruction itself into the destination register
 
-[SZ][ BYTE OPERAND          ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1  0 0 0 0  0 0 0 1   0x00000101         MOVE.B  Dn/An,#Imm8        1           Z,N
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1  0 0 0 0  0 0 0 1   0x40000101         MOVE.W  Dn/An,#Imm16       ?           Z,N
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 1  0 0 0 0  0 0 0 1   0x80000101         MOVE.DW Dn/An,#Imm32       ?           Z,N
+BINARY REPR                                                                          HEXDUMP            OPCODE                   CYCLES      FLAGS
+32.......................21  20........16  15...............................1
+[         OPCODE          ]  [   DEST   ]  [              VALUE             ]
+[0 0 0 0  0 0 0 0  0 0 1 0]  [0 0 0 0  0]  [* * * *  * * * *  * * * *  * * *]        0x00400000         MOVEQ  Dn,#Imm15          1           *
 
-## STR(Memory Destination)
+## MOVI
 
-Moves the value of a source register into the memory that is specified by the destination register. 
+Move Immediate Value - Move the specified constant value into the specified register, this instruction has a length of two instruction words.
 
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 1    0x00000201         MOVE.B  (An),Dn             ?          Z,N(?)
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 1    0x40000201         MOVE.W  (An),Dn             ?          Z,N(?)
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 1    0x80000201         MOVE.DW (An),Dn             ?          Z,N(?)
+
+BINARY REPR                                                                          HEXDUMP            OPCODE                   CYCLES      FLAGS
+32.......................21  20........16  15...............................1
+[         OPCODE          ]  [   DEST   ]  [              UNUSED            ]
+[0 0 0 0  0 0 0 0  0 0 1 1]  [0 0 0 0  0]  [* * * *  * * * *  * * * *  * * *]        0x00600000         MOVEI Dn,#Imm32		 2           *
+
+## STR
+
+Store - Stores the Value in the specified source register into address specified by the destination register.
+
+BINARY REPR                                                                          HEXDUMP            OPCODE                   CYCLES      FLAGS
+32.......................21  20........16  15........11  10.........6  5  4........1
+[         OPCODE          ]  [  SOURCE  ]  [   DEST   ]  [ R_OFFSET ] [O] [ MODE   ]
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 0  0]   0x00000000         STR.DW  (Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 0  1]   0x00000000         STR.DW +(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 1  0]   0x00000000         STR.DW -(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 1  1]   0x00000000         STR.DW  (Dn+O)+ ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 0  0]   0x00000000         STR.DW  (Dn+O)- ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 0  1]   0x00000000         STR.W   (Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 1  0]   0x00000000         STR.W  +(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 1  1]   0x00000000         STR.W  -(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 0  0]   0x00000000         STR.W   (Dn+O)+ ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 0  1]   0x00000000         STR.W   (Dn+O)- ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 1  0]   0x00000000         STR.B   (Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 1  1]   0x00000000         STR.B  +(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 0  0]   0x00000000         STR.B  -(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 0  1]   0x00000000         STR.B   (Dn+O)+ ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 1  1]   0x00000000         STR.B   (Dn+O)- ,Dn
+
+
+
 
 ## LDR(Memory Source)
 
