@@ -63,6 +63,7 @@ BINARY REPR                                                                     
 
 Move Immediate Value - Move the specified constant value into the specified register, this instruction has a length of two instruction words.
 
+'*' = Bit setting is undefined.
 
 BINARY REPR                                                                          HEXDUMP            OPCODE                   CYCLES      FLAGS
 32.......................21  20........16  15...............................1
@@ -71,84 +72,67 @@ BINARY REPR                                                                     
 
 ## STR
 
-Store - Stores the Value in the specified source register into address specified by the destination register.
+Store Register - Stores the Value in the specified source register into address specified by the destination register.
 
 BINARY REPR                                                                          HEXDUMP            OPCODE                   CYCLES      FLAGS
 32.......................21  20........16  15........11  10.........6  5  4........1
 [         OPCODE          ]  [  SOURCE  ]  [   DEST   ]  [ R_OFFSET ] [O] [ MODE   ]
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 0  0]   0x00000000         STR.DW  (Dn+O)  ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 0  1]   0x00000000         STR.DW +(Dn+O)  ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 1  0]   0x00000000         STR.DW -(Dn+O)  ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 1  1]   0x00000000         STR.DW  (Dn+O)+ ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 0  0]   0x00000000         STR.DW  (Dn+O)- ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 0  1]   0x00000000         STR.W   (Dn+O)  ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 1  0]   0x00000000         STR.W  +(Dn+O)  ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 1  1]   0x00000000         STR.W  -(Dn+O)  ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 0  0]   0x00000000         STR.W   (Dn+O)+ ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 0  1]   0x00000000         STR.W   (Dn+O)- ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 1  0]   0x00000000         STR.B   (Dn+O)  ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 1  1]   0x00000000         STR.B  +(Dn+O)  ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 0  0]   0x00000000         STR.B  -(Dn+O)  ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 0  1]   0x00000000         STR.B   (Dn+O)+ ,Dn
-[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 1  1]   0x00000000         STR.B   (Dn+O)- ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 0  0]   0x00800000         STR.DW  (Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 0  1]   0x00800001         STR.DW +(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 1  0]   0x00800002         STR.DW -(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 1  1]   0x00800003         STR.DW  (Dn+O)+ ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 0  0]   0x00800004         STR.DW  (Dn+O)- ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 0  1]   0x00800005         STR.W   (Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 1  0]   0x00800006         STR.W  +(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 1  1]   0x00800007         STR.W  -(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 0  0]   0x00800008         STR.W   (Dn+O)+ ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 0  1]   0x00800009         STR.W   (Dn+O)- ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 1  0]   0x0080000A         STR.B   (Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 1  1]   0x0080000B         STR.B  +(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 0  0]   0x0080000C         STR.B  -(Dn+O)  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 0  1]   0x0080000D         STR.B   (Dn+O)+ ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 0]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 1  0]   0x0080000E         STR.B   (Dn+O)- ,Dn
 
 
 
 
-## LDR(Memory Source)
+## LDR
 
-Moves a value from memory pointed to by an address register into the specified data register.
+Load Register - Moves the Value that is pointed to by the source register into the destination register.
 
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 0 1    0x00000301         MOVE.B  Dn,(An)             ?          Z,N(?)
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 0 1    0x40000301         MOVE.W  Dn,(An)             ?          Z,N(?)
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 0 1    0x80000301         MOVE.DW Dn,(An)             ?          Z,N(?)
+BINARY REPR                                                                          HEXDUMP            OPCODE                   CYCLES      FLAGS
+32.......................21  20........16  15........11  10.........6  5  4........1
+[         OPCODE          ]  [  SOURCE  ]  [   DEST   ]  [ R_OFFSET ] [O] [ MODE   ]
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 0  0]   0x00A00000       LDR.DW   (Dn+O)   ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 0  1]   0x00A00001       LDR.DW  +(Dn+O)   ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 1  0]   0x00A00002       LDR.DW  -(Dn+O)   ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 0 1  1]   0x00A00003       LDR.DW   (Dn+O)+  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 0  0]   0x00A00004       LDR.DW   (Dn+O)-  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 0  1]   0x00A00005       LDR.W    (Dn+O)   ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 1  0]   0x00A00006       LDR.W   +(Dn+O)   ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [0 1 1  1]   0x00A00007       LDR.W   -(Dn+O)   ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 0  0]   0x00A00008       LDR.W    (Dn+O)+  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 0  1]   0x00A00009       LDR.W    (Dn+O)-  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 1  0]   0x00A0000A       LDR.B    (Dn+O)   ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 0 1  1]   0x00A0000B       LDR.B   +(Dn+O)   ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 0  0]   0x00A0000C       LDR.B   -(Dn+O)   ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 0  1]   0x00A0000D       LDR.B    (Dn+O)+  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 1  0]   0x00A0000E       LDR.B    (Dn+O)-  ,Dn
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0]  [0 0 0 0  0]  [0 0 0 0  0] [0] [1 1 1  0]   0x00A0000F       LDR.B    (Dn+O)-  ,Dn
 
-## Move (Memory Dest Increment)
+## LEA
 
-Move a value from the specified data register into the location specified by the address register. Increase the target pointer
-by the size of the SZ field.
+Load Effective Address - Loads an address either from an immediate value, register or memory location. An Immediate Value needs a second read from memory.
 
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 0 1    0x00000401         MOVE.B  (An)+,Dn             ?          Z,N(?)
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 0 1    0x40000401         MOVE.W  (An)+,Dn             ?          Z,N(?)
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 0 1    0x80000401         MOVE.DW (An)+,Dn             ?          Z,N(?)
+'*' = Bit setting is undefined.
+'-' = Indicates Bits that are used to indicate the source register.
 
-## Move (Memory Src Increment)
-Move a value from Memory indicated by the specified address register into the target data register. Increase the target pointer
-by the size of the SZ field.
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 1  0 0 0 0  0 0 0 1    0x00000501         MOVE.B  Dn,(An)+             ?          Z,N(?)
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 1  0 0 0 0  0 0 0 1    0x40000501         MOVE.W  Dn,(An)+             ?          Z,N(?)
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 1  0 0 0 0  0 0 0 1    0x80000501         MOVE.DW Dn,(An)+             ?          Z,N(?)
-
-
-## Move (Memory Dest Decrement)
-Move a value from the specified data register into the location specified by the address register. Decrease the target pointer
-by the size of the SZ field.
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 0 1    0x00000601         MOVE.B  (An)-,Dn             ?          Z,N(?)
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 0 1    0x40000601         MOVE.W  (An)-,Dn             ?          Z,N(?)
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 0 0 1    0x80000601         MOVE.DW (An)-,Dn             ?          Z,N(?)
-
-## Move (Memory Source Decrement)
-Move a value from Memory indicated by the specified address register into the target data register. Decrease the target pointer
-by the size of the SZ field.
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x00000701         MOVE.B  Dn,(An)+             ?          Z,N(?)
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x40000701         MOVE.W  Dn,(An)+             ?          Z,N(?)
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 0 1    0x80000701         MOVE.DW Dn,(An)+             ?          Z,N(?)
-
-
-## LEA (Load Effective Address Immediate)
-
-Load the immediate value into the address register indicated by the destination.
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 1  0 0 0 0  0 0 1 0    0x80000702         LEA.DW An,#Imm32              ?          None
+BINARY REPR                                                                             HEXDUMP            OPCODE                   CYCLES      FLAGS
+32.......................21  20............14 13.........9 8.................1
+[         OPCODE          ]  [    SOURCE    ] [   DEST   ] [     UNUSED      ]
+[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0 0 0] [0 0 0 0  0] [* * *  * * * *  *]          0x00A00000         LEA  Dn ,#Imm32
+[0 0 0 0  0 0 0 0  0 1 0 1]  [- - - -  - 1 0] [0 0 0 0  0] [* * *  * * * *  *]          0x00A00000         LEA  Dn ,(Dn)
+[0 0 0 0  0 0 0 0  0 1 0 1]  [- - - -  - 1 1] [0 0 0 0  0] [* * *  * * * *  *]          0x00A00000         LEA  Dn ,Dn
 
 ## PUSH (Immediate Value)
 
@@ -170,66 +154,21 @@ Push a value that is inside a data/address register
 
 ## PUSH (From Memory)
 
-Push a value that is pointed to by an address register
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 1 1    0x00000203         PUSH.B  (An)
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 1 1    0x40000203         PUSH.W  (An)
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 1 1    0x80000203         PUSH.DW (An)                   ?          None
 
 ## PUSH (From Memory Increment)
 
-Push the value that is pointed to by an address register onto the stack, the address register will increase by the indicated size after the operation
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 1 1    0x00000303         PUSH.B  (An)+                  ?          None
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 1 1    0x40000303         PUSH.W  (An)+                  ?          None
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1  0 0 0 0  0 0 1 1    0x80000303         PUSH.DW (An)+                  ?          None
 
 ## PUSH (From Memory Decrement)
-
-Push the value that is pointed to by an address register onto the stack, the address register will decrease by the indicated size after the operation
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x00000403         PUSH.B  (An)-                  ?          None
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x40000403         PUSH.W  (An)-                  ?          None
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 0 1 1    0x80000403         PUSH.DW (An)-                  ?          None
 
 
 ## POP (To Register)
 
-Restore the value into the specified register increase the value of the stack pointer.
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0    0x00000004         POP.B Dn/An                     ?          None
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0    0x40000004         POP.W Dn/An                     ?          None
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0    0x80000004         POP.DW Dn/An                    ?          None
-
 
 ## POP (To Memory)
 
-Restore the value with the indicated size at the top of the stack into the memory addressed by the Address Register
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 1 0 0    0x00000204         POP.B  (An)                     ?          None
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 1 0 0    0x40000204         POP.W  (An)                     ?          None
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 0  0 0 0 0  0 0 0 0    0x80000204         POP.DW (An)                     ?          None
 
 ## POP (To Memory Increment)
-
-Restore the value at the top of the stack into the memory address point to by the address register and increment it by the size of the operation.
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 1 0 0    0x00000404         POP.B  (An)+                    ?          None
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 1 0 0    0x40000404         POP.W  (An)+                    ?          None
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 0 0  0 0 0 0  0 1 0 0    0x80000404         POP.DW (An)+                    ?          None
 
 
 ## Pop (To Memory Decrement)
 
-Restore the value at the top of the stack into the memory address pointed to by the address register and decrement it by the size of the operation
-
-[SZ][ OFFSET     ][ SOURCE  ][ DEST   ] [ ADDR_M   ]  [OPCODE        ]
-0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 1 0 0    0x00000404         POP.B  (An)-                    ?          None
-0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 1 0 0    0x40000404         POP.W  (An)-                    ?          None
-1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 1 1 0  0 0 0 0  0 1 0 0    0x80000604         POP.DW (An)-                    ?          None
