@@ -4,31 +4,19 @@ Targets:
     * I want the ISA to be as fixed as possible i.e. no extra reads should be necessary for the decoder to figure out what comes next!
 
 Current Issues:
-    * The OFFSET seems to be wasted right now...
-    * Opcode is probably oversized with 10bits maybe i can scale that down a bit?
-    * Figure out a way to create these tables Programmatically? If i need to change things later down the line this will be a mess!!
-    * The cycles it needs todo certain operations are just placeholders as i have no fucking clue on how to determine clock cycles from an ideas
-      or even from a real processor :| hoping that i can learn that stuff somewhere...or i need an electrical engineer...
-    * The Opcode tables will be insanely huge :( 
+    * Probably a lot of issues i don't see or have no clue that they even exist.
 
 
 # Addressing Modes
-Atomic - Register to Register Moves.
-Immediate - Opcode is followed by a Value of the length specified by the sz field
-MemoryDest - Source from Register into MemoryDest.
-MemoryDestInc - Source from Register into MemoryDest increment Address of destination register.
-MemoryDestDec - Source from Register into MemoryDest decrement Address of destination register.
-MemorySrc - Memory Source into Register.
-MemorySrcInc - Memory Source into Register increment Address of source register.
-MemorySrcDec - Memory Source into Register decrement Address of source register.
+
+TBD
 
 # Opcodes
 
 ### Legend
-  /  = Either a Data Register or an Address Register.
-  Imm8 = Immediate Byte value.
-  Imm16 = Immediate Word value.
-  Imm32 = Immediate Dword value.
+  #Imm8 = Immediate Byte value.
+  #Imm16 = Immediate Word value.
+  #Imm32 = Immediate Dword value.
   Dn = D0-31
 
 ## NOOP
@@ -130,9 +118,9 @@ Load Effective Address - Loads an address either from an immediate value, regist
 BINARY REPR                                                                             HEXDUMP            OPCODE                   CYCLES      FLAGS
 32.......................21  20............14 13.........9 8.................1
 [         OPCODE          ]  [    SOURCE    ] [   DEST   ] [     UNUSED      ]
-[0 0 0 0  0 0 0 0  0 1 0 1]  [0 0 0 0  0 0 0] [0 0 0 0  0] [* * *  * * * *  *]          0x00A00000         LEA  Dn ,#Imm32
-[0 0 0 0  0 0 0 0  0 1 0 1]  [- - - -  - 1 0] [0 0 0 0  0] [* * *  * * * *  *]          0x00A00000         LEA  Dn ,(Dn)
-[0 0 0 0  0 0 0 0  0 1 0 1]  [- - - -  - 1 1] [0 0 0 0  0] [* * *  * * * *  *]          0x00A00000         LEA  Dn ,Dn
+[0 0 0 0  0 0 0 0  0 1 1 0]  [0 0 0 0  0 0 0] [0 0 0 0  0] [* * *  * * * *  *]          0x00C00000         LEA  Dn ,#Imm32
+[0 0 0 0  0 0 0 0  0 1 1 0]  [- - - -  - 1 0] [0 0 0 0  0] [* * *  * * * *  *]          0x00C00000         LEA  Dn ,(Dn)
+[0 0 0 0  0 0 0 0  0 1 1 0]  [- - - -  - 1 1] [0 0 0 0  0] [* * *  * * * *  *]          0x00C00000         LEA  Dn ,Dn
 
 ## PUSH (Immediate Value)
 
@@ -152,23 +140,7 @@ Push a value that is inside a data/address register
 0 1 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1    0x40000003         PUSH.W Dn/An                   ?          None
 1 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0  0 0 1 1    0x80000003         PUSH.DW Dn/An                  ?          None
 
-## PUSH (From Memory)
+## PUSH
 
-
-## PUSH (From Memory Increment)
-
-
-## PUSH (From Memory Decrement)
-
-
-## POP (To Register)
-
-
-## POP (To Memory)
-
-
-## POP (To Memory Increment)
-
-
-## Pop (To Memory Decrement)
+## POP
 
